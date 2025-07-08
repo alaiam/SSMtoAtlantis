@@ -1,0 +1,24 @@
+Package: SSMtoAtlantis
+Type: Package
+Title: From SSM outputs to Atlantis inputs
+Version: 0.1.0
+Authors@R: person("Alaia", "Morell", email = "alaia.morell@gmail.com", role = c("aut", "cre"))
+Description: Translating SSM outputs (FVCOM type) to Atlantis inputs
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+    stringr,
+    ncdf4,
+    raster,
+    tabularaster,
+    rbgm,
+    sf,
+    tidyverse,
+    reshape2,
+    angstroms,
+    doParallel,
+    reticulate,
+    here
+RoxygenNote: 7.2.3
+
