@@ -120,6 +120,7 @@ SSMtoAtlantis <- function(year, velma, filename.hyd, filename.wq){
   write.csv(end.time, "endtime.csv")
 
 }
+
 var.SSMtoAtlantis <- function(year, variable, velma, filename){
 
   list.var = c("salinity","temperature",
@@ -140,77 +141,7 @@ salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, Oxygen, LPON, RPON
 
 }
 
-# Step A
-StepA <- function(year, variable, velma, filename){
-  file_name_input <<- filename
-  print(filename)
-  list.var = c("salinity","temperature",
-               "U", "V", "W",
-               "NO3", "NH4",
-               "SZ", "LZ", "MZ", "SP", "LP",
-               "Oxygen","LPON","RPON",
-               "RDON")
 
-  if(!variable%in%list.var) stop("The variable is not in SSM, please try:
-salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, Oxygen, LPON, RPON, RDON")
-  if(velma == F) stop("Option not available yet --> TODO --> add the condition to have on the output name file")
-
-  if (velma){
-    path =   paste0('/home/atlantis/amps_hydrodynamics/Workflow/Step A/File_regular_grid/VELMA/', year, "/")
-  }else{
-    path =   paste0('/home/atlantis/amps_hydrodynamics/Workflow/Step A/File_regular_grid/No_VELMA/', year, "/")
-  }
-
-  if (!file.exists(path)){dir.create(path)}
-
-  if (variable == "salinity"|| variable == "temperature"){
-    file_name_output <<- paste0(path, 'regular_grid_TS_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_TS.py")
-  }
-
-  if (variable == "U"|| variable == "V"|| variable == "W"){
-    file_name_output <<- paste0(path, 'regular_grid_UVW_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_UVW.py")
-  }
-
-  if (variable == "NO3"|| variable == "NH4"){
-    file_name_output <<- paste0(path, 'regular_grid_N_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_N.py")
-  }
-
-  if (variable == "SZ"|| variable == "LZ"|| variable == "MZ"){
-    file_name_output <<- paste0(path, 'regular_grid_Z_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_Z.py")
-    }
-
-  if (variable == "SP"|| variable == "LP"){
-    file_name_output <<- paste0(path, 'regular_grid_B_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_B.py")
-    }
-
-  if (variable == "Oxygen"){
-    file_name_output <<- paste0(path, 'regular_grid_Oxygen_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_O2.py")
-    }
-
-  if (variable == "LPON"|| variable == "RPON"){
-    file_name_output <<- paste0(path, 'regular_grid_PON_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_PON.py")
-    }
-
-  if (variable == "RDON"){
-    file_name_output <<- paste0(path, 'regular_grid_DON_velma_',year,'.nc')
-    print(file_name_output)
-    py_run_file("Workflow/Step A/StepA_DON.py")
-    }
-}
 # Step B
 StepB <- function(year, variable, velma){
   Nyear <<- year

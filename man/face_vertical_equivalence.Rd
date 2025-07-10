@@ -22,12 +22,12 @@ face_vertical_equivalence(
 }
 \value{
 No value is returned. Two CSV files are written in `R/code`:
-`box_composition.csv` and `face_composition_uv.csv`.
+`uxy2_uv_code.csv` and `face_composition_uv.csv`.
 }
 \description{
 Creates the correspondence between regular grid SSM cells and Atlantis polygons for vertical faces
 (i.e., the borders between polygons). Two CSV files are written in `R/code`:
-`box_composition.csv` and `face_composition_uv.csv`.
+`uxy2_uv_code.csv` and `face_composition_uv.csv`.
 If these files already exist, you can skip to Step 3.
 }
 \examples{

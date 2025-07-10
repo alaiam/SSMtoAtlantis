@@ -14,12 +14,9 @@ import pyproj
 import sys
 
 ###########
-# Step 1a: Retrieve filename and file_name_output from r env
+# Step 1a: Check filename and file_name_output sent from r 
 
-filename = r.file_name_input
 print(filename)
-
-file_name_output = r.file_name_output
 print(file_name_output)
 
 

@@ -13,19 +13,11 @@ import pyproj
 import sys
 
 ###########
-# Step 1a: Retrieve filename and file_name_output from r env
+# Step 1a: Check filename and file_name_output sent from r 
 
-filename = r.file_name_input
 print(filename)
-
-file_name_output = r.file_name_output
 print(file_name_output)
 
-
-filename = "//nfsdata/SSM_contaminants/pcb_yr2011_sd_wqm_time_avg_crop.nc"
-print(filename)
-file_name_output = "regular_grid_POM_sed_novelma_2011.nc"
-print(file_name_output)
 # Step 1b: define kriging function
 
 # Create an RTree instance for spatial indexing using pyinterp

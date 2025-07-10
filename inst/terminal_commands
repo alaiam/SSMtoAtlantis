@@ -1,0 +1,13 @@
+# Install conda
+
+# wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+# bash Miniconda3-latest-Linux-x86_64.sh
+
+# Install the environment
+
+conda create -n Salish_sea_env --file SSMtoAtlantis/inst/Salish_sea_env_explicit.txt
+
+# If pyproj and netCDF4 are still missing
+
+conda activate Salish_sea_env
+conda install pyproj netCDF4
