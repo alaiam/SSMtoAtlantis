@@ -19,8 +19,10 @@ import sys
 ###########
 # Step 1a: Check filename and file_name_output sent from r 
 
-print(filename)
-print(file_name_output)
+filename = r.filename
+file_name_output = r.file_name_output
+print(r.filename)
+print(r.file_name_output)
 
 # Step 1b: define kriging function
 # Create an RTree instance for spatial indexing using pyinterp

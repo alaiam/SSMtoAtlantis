@@ -15,8 +15,10 @@ import sys
 ###########
 # Step 1a: Check filename and file_name_output sent from r 
 
-print(filename)
-print(file_name_output)
+filename = r.filename
+file_name_output = r.file_name_output
+print(r.filename)
+print(r.file_name_output)
 
 # filename = "//nfsdata/time_avg/pcb_yr2011_v3_wqm_time_avg_crop.nc"
 # filename = "//nfsdata/SSM_contaminants/pcb153_yr2011_sd_wqm_time_avg_crop.nc"
