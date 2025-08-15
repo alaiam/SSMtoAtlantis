@@ -2,9 +2,9 @@
 % Please edit documentation in R/setup_python_env.R
 \name{setup_python_env}
 \alias{setup_python_env}
-\title{Create and configure a conda environment for the SSM to Atlantis translation}
+\title{setup_python_env : Create and configure a conda environment for the SSM to Atlantis translation}
 \usage{
-setup_python_env(env_name = "Salish_sea_env5", conda_path)
+setup_python_env(env_name = "Salish_sea_env", conda_path)
 }
 \arguments{
 \item{env_name}{Character. Name of the conda environment to create or use. Default is `"Salish_sea_env"`.}
