@@ -1,56 +1,43 @@
 
-# Set path
-
-path        <- here()
-outdir <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear)
-if (!file.exists(outdir)){dir.create(outdir)}
-
-# Set path
-if (velma){
-  uv_dir <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_VELMA_",Nyear,"_uv")
-  ww_dir <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_VELMA_",Nyear,"_ww")
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear,"/pugetsound_SSM_Atlantis_uvw_velma_",Nyear,".nc")
-  
-}else{
-  uv_dir <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_No_VELMA_",Nyear,"_uv")
-  ww_dir <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_No_VELMA_",Nyear,"_ww")
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/No_VELMA/",Nyear,"/pugetsound_SSM_Atlantis_uvw_novelma_",Nyear,".nc")
-  
-}
 
 
+output_path <- here::here("Atlantis_inputs", scenario, year)
+
+
+uv_dir <- paste0(here(), "/Atlantis_daily_files/",scenario, "/", year,"/uv")
+ww_dir <- paste0(here(), "/Atlantis_daily_files/",scenario, "/", year,"/ww")
+nc_filename <- paste0(output_path,"/pugetsound_SSM_Atlantis_uvw_",scenario,year,".nc")
 
 ###########################################################################
-# matrix dest_k, dest_b, 
-
+# matrix dest_k, dest_b,
 
 table_flux_ww <- read.csv(paste0(ww_dir,"/flux_ww_1.csv"))
 table_flux_uv <- read.csv(paste0(uv_dir,"/uv_1.csv"))
 
 
-table_flux_ww1 <- table_flux_ww %>% 
-  filter(time == 1)%>% 
+table_flux_ww1 <- table_flux_ww %>%
+  filter(time == 1)%>%
   select("Layer", "Polygon..","adjacent.box", "water.exchange" , "Layer_dest") %>%
-  rename(atlantis_layer = "Layer", 
-         `Polygon #` = "Polygon..", 
-         `adjacent box` = "adjacent.box", 
-         Corr.water.transfert = "water.exchange", 
+  rename(atlantis_layer = "Layer",
+         `Polygon #` = "Polygon..",
+         `adjacent box` = "adjacent.box",
+         Corr.water.transfert = "water.exchange",
          Layer_dest = "Layer_dest")
 
-table_flux_uv1 <- table_flux_uv %>% 
-  filter(time == 1)%>% 
+table_flux_uv1 <- table_flux_uv %>%
+  filter(time == 1)%>%
   select("atlantis_layer", "Polygon..","adjacent.box", "Corr.water.transfert" , "Layer_dest") %>%
-  rename(`Polygon #` = "Polygon..", 
+  rename(`Polygon #` = "Polygon..",
          `adjacent box` = "adjacent.box")
 
 flux_all_table <- rbind(table_flux_uv1, table_flux_ww1)
 
 
-##############################  
-##### File definition 
+##############################
+##### File definition
 
 # Var
-ts = 730 
+ts = 730
 layer = 6
 Nbox = 89
 Nmaxdest = max(table(flux_all_table$atlantis_layer, flux_all_table$`Polygon #`))
@@ -67,41 +54,39 @@ for (days in (1:ts)){
   table_flux_ww <- read.csv(paste0(ww_dir,"/flux_ww_",days,".csv"))
 
   table_flux_uv <- read.csv(paste0(uv_dir,"/uv_",days,".csv"))
-  
-  table_flux_ww1 <- table_flux_ww %>% 
-    filter(time == days)%>% 
+
+  table_flux_ww1 <- table_flux_ww %>%
+    filter(time == days)%>%
     select("Layer", "Polygon..","adjacent.box", "water.exchange" , "Layer_dest") %>%
-    rename(atlantis_layer = "Layer", 
-           `Polygon #` = "Polygon..", 
-           `adjacent box` = "adjacent.box", 
-           Corr.water.transfert = "water.exchange", 
+    rename(atlantis_layer = "Layer",
+           `Polygon #` = "Polygon..",
+           `adjacent box` = "adjacent.box",
+           Corr.water.transfert = "water.exchange",
            Layer_dest = "Layer_dest")
-  
-  table_flux_uv1 <- table_flux_uv %>% 
-    filter(time == days)%>% 
+
+  table_flux_uv1 <- table_flux_uv %>%
+    filter(time == days)%>%
     select("atlantis_layer", "Polygon..","adjacent.box", "Corr.water.transfert" , "Layer_dest") %>%
-    rename(`Polygon #` = "Polygon..", 
+    rename(`Polygon #` = "Polygon..",
            `adjacent box` = "adjacent.box")
-  
+
   flux_all_table <- rbind(table_flux_uv1, table_flux_ww1)
-  
+
 
   for (i in (1:length(flux_all_table$atlantis_layer))){
     box_i = flux_all_table$`Polygon #`[i]+1
     layer_i = flux_all_table$atlantis_layer[i]+1
-    
-    vector <- exchange[,layer_i,box_i,days] 
+
+    vector <- exchange[,layer_i,box_i,days]
     Nrangement <- match("0", vector)
-    
+
     dest_b[Nrangement,layer_i,box_i,days]   = flux_all_table$`adjacent box`[i]          # box de destination
     dest_k[Nrangement,layer_i,box_i,days]   = flux_all_table$Layer_dest[i]                                            # layer de destination
     exchange[Nrangement,layer_i,box_i,days] = flux_all_table$Corr.water.transfert[i]
-    
-  }
-  
+
   }
 
-
+  }
 
 
 ###################################################################################
@@ -149,4 +134,3 @@ ncatt_put(nc, 0, "parameters", "")
 
 # Close the NetCDF file
 nc_close(nc)
-setwd(here())

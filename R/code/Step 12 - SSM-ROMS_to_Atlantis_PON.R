@@ -1,29 +1,15 @@
 
-
-
 ###########################################################################
 # Path and names definition
 
-path        <- paste0(here(), "/Workflow/Step B/")
-input_path <- paste0(here(),"/Workflow/Step A/File_regular_grid/")
-
-# Velma?
-Velma = F
-if (Velma){
-  filename <- paste0("VELMA/",Nyear,"/regular_grid_PON_velma_",Nyear,".nc")
-  output_path <- paste0(path, "intermediate output archive/output_VELMA_",Nyear,"_PON/")
-
-}else{
-  filename <- paste0("No_VELMA/",Nyear,"/regular_grid_PON_novelma_",Nyear,".nc")
-  output_path <- paste0(path, "intermediate output archive/output_No_VELMA_",Nyear,"_PON/")
-}
-
-if (!file.exists(output_path)){dir.create(output_path)}
+input_path <- here::here("File_regular_grid", scenario, year)
+filename <- paste0("/regular_grid_PON_", scenario , "_",year, ".nc")
+output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 ###########################################################################
 # Read data ROMS data
-roms <- tidync(paste(input_path,filename, sep = ""))
-box_composition <- read.csv("Step B/code/box_composition.csv")
+roms <- tidync(paste0(input_path,filename))
+box_composition <- read.csv(here("R/code/box_composition.csv"))
 
 ###########################################################################
 
@@ -31,11 +17,11 @@ box_composition <- read.csv("Step B/code/box_composition.csv")
 roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncdf
   pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
-    roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>% 
+    roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
   })
 
-#### 
+####
 atlantis_bgm <- read_bgm(paste(path,"PugetSound_89b_070116.bgm", sep = ""))
 atlantis_sf <- atlantis_bgm %>% box_sf()
 area  <- (atlantis_sf %>% ungroup %>%
@@ -61,10 +47,10 @@ variable_before_Atlantis2 <- roms %>%
   tidync::hyper_tibble(force = TRUE) %>%
   dplyr::select(RPON, LPON, longitude, latitude, sigma_layer,time)%>%
   dplyr::rename(
-    RPON=RPON, 
-    LPON=LPON, 
-    longitude = longitude,  
-    latitude = latitude,  
+    RPON=RPON,
+    LPON=LPON,
+    longitude = longitude,
+    latitude = latitude,
     roms_layer = sigma_layer, time = time)
 
 
@@ -77,35 +63,35 @@ registerDoParallel(cl)
 
 foreach(days = step_file) %dopar%{
   # for (days in 1:length(step_file)){
-  
-  
-  
-  
+
+
+
+
   variable_before_Atlantis<- variable_before_Atlantis2 %>% filter(time== days)
-  
-  
-  
+
+
+
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
-  
+
   ###################################################################
-  time = sort(unique(variables_polygons$time)) 
+  time = sort(unique(variables_polygons$time))
   box = 89
   layer = 6
   N_var = 2
-  
+
   atlantis_input_RPON <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
   atlantis_input_LPON <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
-  
+
   for (i in 0:(box-1)){
     for (t in 1:length(time)){
       all.layers_RPON = rep(NA,6)   # define an empty vector to receive the values of the 6 layers for RPON
       all.layers_LPON = rep(NA,6) # define an empty vector to receive the values of the 6 layers for LPON
       # Calculate the layer
-      for (j in 1:layer){ 
+      for (j in 1:layer){
         subset <-variables_polygons %>%
           filter(.bx0 == i, atlantis_layer == j, time == time[t])
-        
-        
+
+
         if (dim(subset)[1] == 0){
           all.layers_RPON[j] = NA
           all.layers_LPON[j] = NA
@@ -116,19 +102,19 @@ foreach(days = step_file) %dopar%{
           # all.layers_LPON[j] <- (mean(subset$LPON, na.rm = T)*area[i+1,1]*layer_thickness[j]*1000)[[1]] #redfield ratio
         }
       }
-      
+
       keep <- all.layers_RPON[is.na(all.layers_RPON)]
       all.layers_RPON <- c(rev(all.layers_RPON[!is.na(all.layers_RPON)]),keep,80000)  # Value in sediment from SSM (Letourneau et al. 2017, see p87)
       atlantis_input_RPON[,i+1,t] <- all.layers_RPON
-      
+
       keep <- all.layers_LPON[is.na(all.layers_LPON)]
       all.layers_LPON <- c(rev(all.layers_LPON[!is.na(all.layers_LPON)]),keep,10000)  # Value in sediment from SSM (Letourneau et al. 2017, see p87)
       atlantis_input_LPON[,i+1,t] <- all.layers_LPON
-      
+
     }
   }
-  
-  
+
+
   ###################################################################################
   # Define nc file
   ###################################################################################
@@ -148,34 +134,34 @@ foreach(days = step_file) %dopar%{
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
   nc <- nc_create(nc_filename, vars = list(RPON = RPON, LPON = LPON))
-  
+
   # Put dimensions and variables in the NetCDF file
-  
+
   ncvar_put(nc, z_var, 1:(layer+1))
   ncvar_put(nc, b_var, 0:(box-1))
   ncvar_put(nc, t_var, (time-1)*60*60)
   ncvar_put(nc, RPON, atlantis_input_RPON, start = c(1,1,1),count = c( layer+1,box, length(time)))
   ncvar_put(nc, LPON, atlantis_input_LPON, start = c(1,1,1),count = c( layer+1,box, length(time)))
-  
+
   # Add minimum and maximum values to RPON variable attributes
   ncatt_put(nc, "RPON", "valid_min", -50)
   ncatt_put(nc, "RPON", "valid_max", 200)
-  
+
   # Add minimum and maximum values to LPON variable attributes
   ncatt_put(nc, "LPON", "valid_min", 0)
   ncatt_put(nc, "LPON", "valid_max", 2000)
-  
+
   # Add dt attribute to t variable
   ncatt_put(nc, "t", "dt", 43200.0)
-  
+
   # Global attributes
   ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
   ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
   ncatt_put(nc, 0, "parameters", "")
-  
+
   # Close the NetCDF file
   nc_close(nc)
-  
+
 }
 
 

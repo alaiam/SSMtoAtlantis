@@ -1,31 +1,16 @@
 
-
-
 ###########################################################################
 # Path and names definition
 
-path        <- paste0(here(), "/Workflow/Step B/")
-input_path <- paste0(here(),"/Workflow/Step A/File_regular_grid/")
+input_path <- here::here("File_regular_grid", scenario, year)
+filename <- paste0("/regular_grid_TS_", scenario , "_",year, ".nc")
+output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
-# Velma?
-if (velma){
-  filename <- paste0("VELMA/",Nyear,"/regular_grid_TS_velma_",Nyear,".nc")
-  output_path <- paste0(path, "intermediate output archive/output_VELMA_",Nyear,"_TS/")
-
-}else{
-  filename <- paste0("No_VELMA/",Nyear,"/regular_grid_TS_novelma_",Nyear,".nc")
-  output_path <- paste0(path, "intermediate output archive/output_No_VELMA_",Nyear,"_TS/")
-}
-
-if (!file.exists(output_path)){dir.create(output_path)}
-
-RegularSSM_file_path
-RegularSSM_file_name
 
 ###########################################################################
 # Read data ROMS data
 roms <- tidync(paste0(input_path,filename))
-box_composition <- read.csv(paste0(path, "code/box_composition.csv"))
+box_composition <- read.csv(here("R/code/box_composition.csv"))
 
 ###########################################################################
 
@@ -36,7 +21,6 @@ roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncd
     roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
   })
-
 
 ############################################################################################
 ############################################################################################
@@ -62,11 +46,9 @@ variable_before_Atlantis2 <- roms %>%
     latitude = latitude,
     roms_layer = sigma_layer, time = time)
 gc()  # free unsused memory
-cores=detectCores()
-cl <- cores -1 #not to overload your computer
-cl <- 4 #not to overload your computer
+cores_possible_memory <- as.numeric(system("awk '/MemAvailable/ {print $2}' /proc/meminfo", intern = TRUE)) / 1024 /1000/8
+cl=ceilling(min(detectCores()-1, cores_possible_memory))
 registerDoParallel(cl)
-
 
 foreach(days = step_file) %dopar%{
 
@@ -112,8 +94,6 @@ foreach(days = step_file) %dopar%{
 
     }
   }
-
-
   ###################################################################################
   # Define nc file
   ###################################################################################
@@ -160,7 +140,5 @@ foreach(days = step_file) %dopar%{
 
   # Close the NetCDF file
   nc_close(nc)
-
 }
 end_time <- Sys.time()
-setwd(here())

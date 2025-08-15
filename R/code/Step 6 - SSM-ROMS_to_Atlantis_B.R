@@ -1,42 +1,29 @@
 
 
-
 ###########################################################################
 # Path and names definition
 
-path        <- paste0(here(), "/Workflow/Step B/")
-input_path <- paste0(here(),"/Workflow/Step A/File_regular_grid/")
-
-# Velma?
-Velma = T
-if (Velma){
-  filename <- paste0("VELMA/",Nyear,"/regular_grid_B_velma_",Nyear,".nc")
-  output_path <- paste0(path, "intermediate output archive/output_VELMA_",Nyear,"_B/")
-  
-}else{
-  filename <- paste0("No_VELMA/",Nyear,"/regular_grid_B_novelma_",Nyear,".nc")
-  output_path <- paste0(path, "intermediate output archive/output_No_VELMA_",Nyear,"_B/")
-}
-
-if (!file.exists(output_path)){dir.create(output_path)}
+input_path <- here::here("File_regular_grid", scenario, year)
+filename <- paste0("/regular_grid_B_", scenario , "_",year, ".nc")
+output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 
 ###########################################################################
 # Read data ROMS data
 roms <- tidync(paste0(input_path,filename))
-box_composition <- read.csv(paste0(path,"code/box_composition.csv"))
-  
+box_composition <- read.csv(here("R/code/box_composition.csv"))
+
 ###########################################################################
 
 # get list of ROMS variables
 roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncdf
   pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
-    roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>% 
+    roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
   })
 
-#### 
+####
 atlantis_bgm <- read_bgm(paste(path,"PugetSound_89b_070116.bgm", sep = ""))
 atlantis_sf <- atlantis_bgm %>% box_sf()
 area  <- (atlantis_sf %>% ungroup %>%
@@ -57,16 +44,16 @@ step_file <- out
 
 B1_dim <- roms_vars %>% dplyr::filter(name==c("B1")) %>% pluck('grd')
 
-  
+
 variable_before_Atlantis2 <- roms %>%
   tidync::activate(B1_dim) %>%
   tidync::hyper_tibble(force = TRUE) %>%
   dplyr::select(B1, B2, longitude, latitude, sigma_layer,time)%>%
   dplyr::rename(
-    B1=B1, 
-    B2=B2, 
-    longitude = longitude,  
-    latitude = latitude,  
+    B1=B1,
+    B2=B2,
+    longitude = longitude,
+    latitude = latitude,
     roms_layer = sigma_layer, time = time)
 
 
@@ -78,12 +65,12 @@ registerDoParallel(4)
 
 foreach(days = step_file) %dopar%{
 
-  
+
   variable_before_Atlantis<- variable_before_Atlantis2 %>% filter(time== days)
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
 
   ###################################################################
-time = sort(unique(variables_polygons$time)) 
+time = sort(unique(variables_polygons$time))
 box = 89
 layer = 6
 N_var = 2
@@ -96,11 +83,11 @@ for (i in 0:(box-1)){
     all.layers_B1 = rep(NA,6)   # define an empty vector to receive the values of the 6 layers for B1
     all.layers_B2 = rep(NA,6) # define an empty vector to receive the values of the 6 layers for B2
     # Calculate the layer
-    for (j in 1:layer){ 
+    for (j in 1:layer){
       subset <-variables_polygons %>%
         filter(.bx0 == i, atlantis_layer == j, time == time[t])
-      
-          
+
+
           if (dim(subset)[1] == 0){
             all.layers_B1[j] = NA
             all.layers_B2[j] = NA
@@ -112,15 +99,15 @@ for (i in 0:(box-1)){
             all.layers_B2[j] <- (mean(subset$B2, na.rm = T)*0.176*1000)[[1]] #redfield ratio
           }
     }
-    
+
     keep <- all.layers_B1[is.na(all.layers_B1)]
     all.layers_B1 <- c(rev(all.layers_B1[!is.na(all.layers_B1)]),keep,NA)
     atlantis_input_B1[,i+1,t] <- all.layers_B1
-    
+
     keep <- all.layers_B2[is.na(all.layers_B2)]
     all.layers_B2 <- c(rev(all.layers_B2[!is.na(all.layers_B2)]),keep,NA)
     atlantis_input_B2[,i+1,t] <- all.layers_B2
-      
+
     }
 }
 

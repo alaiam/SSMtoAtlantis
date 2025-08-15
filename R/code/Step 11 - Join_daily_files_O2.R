@@ -1,18 +1,14 @@
 
-# Set path
-if (velma){
-  path <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_VELMA_",Nyear,"_O2")
-}else{
-  path <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_No_VELMA_",Nyear,"_O2")
-}
-setwd(path)
+
+input_path <- here("Atlantis_daily_files",scenario,year,"O2")
+output_path <- here("Atlantis_inputs",scenario,year)
+nc_filename <- paste0(output_path, "/pugetsound_SSM_Atlantis_oxygen_",scenario,"_",year,".nc")
 
 
+list.file <- sort(list.files(input_path))
 
-list.file <- sort(list.files(path))
 
-
-time = seq(0,730*12*60*60-1, 12*60*60) 
+time = seq(0,730*12*60*60-1, 12*60*60)
 
 
 Ndt = 1:length(time)
@@ -23,7 +19,7 @@ N_var = 1
 atlantis_input_O2 <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
 liste <- sort(list.file)
 for (i in 1:length(list.file)){
-  nc <- nc_open(paste0("O2_Atlantis_",i,".nc"))
+  nc <- nc_open(paste0(input_path,"/O2_Atlantis_",i,".nc"))
   pdt <- ncvar_get(nc, varid = "t")/60/60+1
   atlantis_input_O2[,,i]      <- ncvar_get(nc, varid = "O2")*1000 # from mg/l to mg/m3
   nc_close(nc)
@@ -46,12 +42,6 @@ O2 <- ncvar_def("Oxygen", "double", dim = list( z_dim,b_dim, t_dim),
 
 
 # Create a NetCDF file
-if (velma){
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear,"/pugetsound_SSM_Atlantis_Oxygen_velma_",Nyear,".nc")
-}else{
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/No_VELMA/",Nyear,"/pugetsound_SSM_Atlantis_Oxygen_","2011.nc")
-}
-
 nc <- nc_create(nc_filename, vars = list(O2 = O2))
 
 # Put dimensions and variables in the NetCDF file
@@ -74,5 +64,3 @@ ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
 
 # Close the NetCDF file
 nc_close(nc)
-setwd(here())
-

@@ -1,19 +1,14 @@
 
-# Set path
-if (velma){
-  path <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_VELMA_",Nyear,"_Z")
-}else{
-  path <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_No_VELMA_",Nyear,"_Z")
-}
-setwd(path)
+input_path <- here("Atlantis_daily_files",scenario,year,"Z")
+output_path <- here("Atlantis_inputs",scenario,year)
+nc_filenameSZ <- paste0(output_path, "/pugetsound_SSM_Atlantis_SZ_",scenario,"_",year,".nc")
+nc_filenameMZ <- paste0(output_path, "/pugetsound_SSM_Atlantis_MZ_",scenario,"_",year,".nc")
+nc_filenameLZ <- paste0(output_path, "/pugetsound_SSM_Atlantis_LZ_",scenario,"_",year,".nc")
+
+list.file <- sort(list.files(input_path))
 
 
-list.file <- sort(list.files(path))
-
-
-time = seq(0,730*12*60*60-1, 12*60*60) 
-
-
+time = seq(0,730*12*60*60-1, 12*60*60)
 Ndt = 1:length(time)
 box = 89
 layer = 6
@@ -23,14 +18,12 @@ atlantis_input_SZ <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1)
 atlantis_input_LZ <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
 liste <- sort(list.file)
 for (i in 1:length(list.file)){
-  nc <- nc_open(paste0("Zoo_Atlantis_",i,".nc"))
+  nc <- nc_open(paste0(input_path,"/Zoo_Atlantis_",i,".nc"))
   pdt <- ncvar_get(nc, varid = "t")/60/60+1
   atlantis_input_SZ[,,i]      <- ncvar_get(nc, varid = "SZ")
   atlantis_input_LZ[,,i]      <- ncvar_get(nc, varid = "LZ")
   nc_close(nc)
 }
-
-
 
 atlantis_input_MZ = (atlantis_input_SZ + atlantis_input_LZ)/3
 atlantis_input_SZ = atlantis_input_SZ * 2/3
@@ -55,13 +48,7 @@ SZ <- ncvar_def("Micro_Zoo_N", "double", dim = list( z_dim,b_dim, t_dim),
 
 
 # Create a NetCDF file
-if (velma){
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear,"/pugetsound_SSM_Atlantis_SZ_velma_",Nyear,".nc")
-}else{
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/No_VELMA/",Nyear,"/pugetsound_SSM_Atlantis_SZ_","2011.nc")
-}
-
-nc <- nc_create(nc_filename, vars = list(SZ = SZ))
+nc <- nc_create(nc_filenameSZ, vars = list(SZ = SZ))
 
 # Put dimensions and variables in the NetCDF file
 
@@ -85,10 +72,6 @@ ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
 nc_close(nc)
 
 
-
-
-
-
 ###################################################################################
 # MZ file
 ###################################################################################
@@ -105,13 +88,7 @@ MZ <- ncvar_def("Meso_Zoo_N", "double", dim = list( z_dim,b_dim, t_dim),
 
 
 # Create a NetCDF file
-if (velma){
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear,"/pugetsound_SSM_Atlantis_MZ_velma_",Nyear,".nc")
-}else{
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/No_VELMA/",Nyear,"/pugetsound_SSM_Atlantis_MZ_","2011.nc")
-}
-
-nc <- nc_create(nc_filename, vars = list(MZ = MZ))
+nc <- nc_create(nc_filenameMZ, vars = list(MZ = MZ))
 
 # Put dimensions and variables in the NetCDF file
 
@@ -135,12 +112,6 @@ ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
 nc_close(nc)
 
 
-
-
-
-
-
-
 ###################################################################################
 # LZ file
 ###################################################################################
@@ -158,13 +129,7 @@ LZ <- ncvar_def("Lrg_Zoo_N", "double", dim = list( z_dim,b_dim, t_dim),
 
 
 # Create a NetCDF file
-if (velma){
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear,"/pugetsound_SSM_Atlantis_LZ_velma_",Nyear,".nc")
-}else{
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/No_VELMA/",Nyear,"/pugetsound_SSM_Atlantis_LZ_","2011.nc")
-}
-
-nc <- nc_create(nc_filename, vars = list(LZ = LZ))
+nc <- nc_create(nc_filenameLZ, vars = list(LZ = LZ))
 
 # Put dimensions and variables in the NetCDF file
 
@@ -186,5 +151,4 @@ ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
 
 # Close the NetCDF file
 nc_close(nc)
-setwd(here())
 

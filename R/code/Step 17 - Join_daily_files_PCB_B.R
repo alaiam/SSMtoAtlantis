@@ -1,17 +1,13 @@
-
-# Set path
-if (velma){
-  path <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_VELMA_",Nyear,"_PCB",pcb_n,"_B")
-}else{
-  path <- paste0(here(), "/Workflow/Step B/intermediate output archive/output_No_VELMA_",Nyear,"_PCB",pcb_n,"_B")
-}
-setwd(path)
+input_path <- here("Atlantis_daily_files",scenario,year,"TS")
+output_path <- here("Atlantis_inputs",scenario,year)
+nc_filenameSP <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB",PCB_congener,"_SP_",scenario,"_",year,".nc")
+nc_filenameLP <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB",PCB_congener,"_LP_",scenario,"_",year,".nc")
 
 
-list.file <- sort(list.files(path))
+list.file <- sort(list.files(input_path))
 
 
-time = seq(0,730*12*60*60-1, 12*60*60) 
+time = seq(0,730*12*60*60-1, 12*60*60)
 
 
 Ndt = 1:length(time)
@@ -23,7 +19,7 @@ atlantis_input_PCBB1 <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer
 atlantis_input_PCBB2 <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
 liste <- sort(list.file)
 for (i in 1:length(list.file)){
-  nc <- nc_open(paste0("PCB_B_Atlantis_",i,".nc"))
+  nc <- nc_open(paste0(input_path,"/PCB_B_Atlantis_",i,".nc"))
   pdt <- ncvar_get(nc, varid = "t")/60/60+1
   atlantis_input_PCBB1[,,i]      <- ncvar_get(nc, varid = "PCBB1")/0.176 # Concentration in N higher to take into account all the material
   atlantis_input_PCBB2[,,i]      <- ncvar_get(nc, varid = "PCBB2")/0.176 # Concentration in N higher to take into account all the material
@@ -47,13 +43,7 @@ PCBB1 <- ncvar_def(paste0("PCB",pcb_n,"_Lrg_Phyto_N"), "double", dim = list( z_d
 
 
 # Create a NetCDF file
-if (velma){
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear,"/pugetsound_SSM_Atlantis_PCB",pcb_n,"_LP_velma_",Nyear,".nc")
-}else{
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/No_VELMA/",Nyear,"/pugetsound_SSM_Atlantis_PCB",pcb_n,"_LP_","2011.nc")
-}
-
-nc <- nc_create(nc_filename, vars = list(PCBB1 = PCBB1))
+nc <- nc_create(nc_filenameLP, vars = list(PCBB1 = PCBB1))
 
 # Put dimensions and variables in the NetCDF file
 
@@ -95,15 +85,7 @@ PCBB2 <- ncvar_def(paste0("PCB",pcb_n,"_Sm_Phyto_N"), "double", dim = list( z_di
 
 
 # Create a NetCDF file
-if (velma){
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/VELMA/",Nyear,"/pugetsound_SSM_Atlantis_PCB",pcb_n,"_SP_velma_",Nyear,".nc")
-}else{
-  nc_filename <- paste0(here(), "/Workflow/Step B/Final outputs/No_VELMA/",Nyear,"/pugetsound_SSM_Atlantis_PCB",pcb_n,"_SP_","2011.nc")
-}
-
-
-
-nc <- nc_create(nc_filename, vars = list(PCBB2 = PCBB2))
+nc <- nc_create(nc_filenameSP, vars = list(PCBB2 = PCBB2))
 
 # Put dimensions and variables in the NetCDF file
 
@@ -125,5 +107,3 @@ ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
 
 # Close the NetCDF file
 nc_close(nc)
-setwd(here())
-
