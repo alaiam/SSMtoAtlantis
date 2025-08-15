@@ -24,7 +24,7 @@ StepA <- function(year, variable, scenario, filename) {
   }
 
   scenario <- tolower(scenario)
-  path <- here::here("File_regular_grid", scenario, year)
+  path <- here::here("Atlantis_inputs", scenario, year)
   if (!dir.exists(path)) dir.create(path, recursive = TRUE)
 
   script_map <- list(
@@ -45,13 +45,13 @@ StepA <- function(year, variable, scenario, filename) {
   script <- paste0("python/StepA_", suffix, ".py")
   file_output <- file.path(path, paste0("regular_grid_", suffix, "_", scenario, "_", year, ".nc"))
 
-  py$file_name_input <- filename
-  py$file_name_output <- file_output
+  filename <- r_to_py(filename)
+  file_name_output <- r_to_py(file_output)
 
   print(filename)
   print(file_output)
 
-  reticulate::py_run_file(script)
+  py_run_file(script)
 
   invisible(file_output)
 }

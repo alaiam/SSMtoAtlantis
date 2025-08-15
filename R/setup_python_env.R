@@ -1,4 +1,4 @@
-#' Create and configure a conda environment for the SSM to Atlantis translation
+#' setup_python_env : Create and configure a conda environment for the SSM to Atlantis translation
 #'
 #' This function sets up a Python conda environment for the SSM to Atlantis translation
 #' developped in the SSMtoAtlantis package.
@@ -17,7 +17,7 @@
 #'   conda_path = "/home/atlantis/anaconda3/bin")
 
 
-setup_python_env <- function(env_name = "Salish_sea_env5",
+setup_python_env <- function(env_name = "Salish_sea_env",
                              conda_path) {
      Sys.setenv(PATH = paste(conda_path, Sys.getenv("PATH"), sep = ":"))
      envs <- stringr::word(system("conda env list", intern = TRUE))
