@@ -1,0 +1,63 @@
+---
+title: "SSMtoAtlantis"
+output: html_document
+Author: Alaia Morell
+Date: 15/08/2025
+---
+# From SSM grid (FVCOM like) to regular grid (ROMS like)
+## Load the environment 
+```{r}
+library(reticulate)
+use_condaenv("Salish_sea_env") 
+year = 2011
+scenario = "status_quo"
+filename_hyd = "/home/atlantis/2025_08_08/2025_08_08/velmaT_minus3.35_yr2011_hyd_time_avg_crop.nc"
+filename_wqm = "/home/atlantis/2025_08_08/2025_08_08/velmaT_minus3.35_yr2011_wqm_time_avg_crop.nc"
+
+```
+
+## Physical variables
+```{r}
+
+filename = filename_hyd
+SSMtoAtlantis::StepA(year, "temperature", scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "U" ,          scenario, filename = filename)
+c( "U", "V", "W")
+
+
+```
+## Water quality variables
+
+```{r}
+filename = filename_wqm
+SSMtoAtlantis::StepA(year, "SP",     scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "SZ",     scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "LPON",   scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "RDON",   scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "NO3",    scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "Oxygen", scenario, filename = filename)
+```
+
+# From regular grid to Atlantis grid (irregular polygons) daily files
+
+## Physical variables
+
+```{r}
+SSMtoAtlantis::StepB(year, "temperature", scenario)
+SSMtoAtlantis::StepB(year, "U", scenario)
+```
+
+## Water quality variables
+
+```{r}
+SSMtoAtlantis::StepB(year, "SP", scenario)
+SSMtoAtlantis::StepB(year, "SZ", scenario)
+SSMtoAtlantis::StepB(year, "LPON", scenario)
+SSMtoAtlantis::StepB(year, "RDON", scenario)
+SSMtoAtlantis::StepB(year, "NO3", scenario)
+SSMtoAtlantis::StepB(year, "Oxygen", scenario)
+```
+
+# From Atlantis grid (irregular polygons) daily files to yearly files
+
+

@@ -34,8 +34,8 @@ If these files already exist, you can skip to Step 2.
 \examples{
 SSM_file_path        <- "/nfsdata/SSM_example/HYD"
 SSM_file_name        <- "ssm_00117.nc"
-RegularSSM_file_path <- "~/UWatlantisgroupvm05/amps_hydrodynamics/Workflow/Step A/File_regular_grid/No_VELMA/2011"
-RegularSSM_file_name <- "regular_grid_UVW_novelma_2011.nc"
+RegularSSM_file_path <- "here(File_regular_grid/bau/2011)"
+RegularSSM_file_name <- "regular_grid_UVW_2011.nc"
 face_horizontal_equivalence(SSM_file_path, SSM_file_name,
                             RegularSSM_file_path, RegularSSM_file_name)
 
