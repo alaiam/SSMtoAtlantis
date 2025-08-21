@@ -4,7 +4,6 @@
 ###########
 # import packages
 import numpy as np
-import pandas as pd
 import xarray as xr
 import netCDF4
 import datetime as dt
@@ -21,11 +20,19 @@ file_name_output = r.file_name_output
 print(r.filename)
 print(r.file_name_output)
 
+# filename = "//nfsdata/time_avg/pcb_yr2011_v3_wqm_time_avg_crop.nc"
+# filename = "//nfsdata/SSM_contaminants/pcb153_yr2011_sd_wqm_time_avg_crop.nc"
+# filename = "//nfsdata/SSM_contaminants/pcb138_yr2011_sd_wqm_time_avg_crop.nc"
 
+
+print(filename)
+file_name_output = "testPCB_B153.nc"
+print(file_name_output)
 # Step 1b: define kriging function
 
 # Create an RTree instance for spatial indexing using pyinterp
 mesh = pyinterp.RTree()
+#(original_values=org_B1, original_lon=original_lon, original_lat=original_lat, new_lon=my, new_lat=mx)
 
 def kriging_universal(original_values, original_lon, original_lat, new_lat, new_lon):
     # Pack the original data into the RTree for spatial indexing (erases previous data)
@@ -34,8 +41,7 @@ def kriging_universal(original_values, original_lon, original_lat, new_lat, new_
     kriging, neighbors = mesh.universal_kriging(np.vstack(( new_lon.ravel(), new_lat.ravel())).T, within=True, k=3*3,
                                                 covariance='matern_12', alpha=1_000_000, num_threads=0)
     return kriging.reshape(new_lon.shape)
-
-
+print('Function defined!')
 ###########
 # Step 2b: open netCDF file
 # Open the NetCDF file and read the original Salish Sea Model data
@@ -77,7 +83,7 @@ original_siglev = np.array([-0., -0.03162277, -0.08944271, -0.16431676, -0.25298
 original_time = np.arange(0, 365, 0.5)
 
 #######
-# Step 2d: Start interpolation of variables like temperature, salinity and sigma layer values
+# Step 2d: Start interpolation of variables like PCB in phyto 1 and 2
 # Define the dimensions of the data
 siglay_size = len(original_siglay)
 time_size = len(original_time)
@@ -87,40 +93,26 @@ time_size = len(original_time)
 original_lat = lat
 original_lon = lon 
 
-# Create empty arrays to store the interpolated temperature, salinity, and sigma layer values
-
+# Create empty arrays to store the interpolated PBC1, PBC2
 new_regular_B1 = np.full((len(original_time), len(
     original_siglay), len(reg_lon), len(reg_lat)), np.nan)
 new_regular_B2 = np.full((len(original_time), len(
     original_siglay), len(reg_lon), len(reg_lat)), np.nan)
 
+
 # Loop over each depth layer and interpolate the data onto the regular grid
 for d in range(0, siglay_size):
   for t in range(0, time_size):  # Loop over time steps
-    
-        # Extract data
-        org_B1 = ssm_solution.B1[t][d].values  # Extract B1 values
-        org_B2 = ssm_solution.B2[t][d].values  # Extract B2 values
+        org_B1 = ssm_solution.PCBCONALGW1[t][0][d].values  # Extract PCB in B1 values
+        org_B2 = ssm_solution.PCBCONALGW2[t][0][d].values # Extract PCB in B2 values
         
-        # Krigging
+        #Krigging
         new_regular_B1[t][d][:] = kriging_universal(
             org_B1, original_lon, original_lat, my, mx)
         new_regular_B2[t][d][:] = kriging_universal(
             org_B2, original_lon, original_lat, my, mx)
+
 print('Interpolation variables done!')
-
-# org_B1 = ssm_solution.B1[1][0].values
-# new_regular_salt_test_l = kriging_universal(
-# org_B1, original_lon, original_lat, my, mx)
-# import matplotlib.pyplot as plt
-# plt.figure(figsize=(10, 10))
-# plt.pcolormesh(mx, my, new_regular_salt_test_l, cmap='viridis')
-# plt.colorbar(label='B1')
-# plt.title('Interpolated B1')
-# plt.xlabel('Longitude')
-# plt.ylabel('Latitude')
-# plt.show()
-
 
 # Create a new NetCDF file with the interpolated data
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,20 +158,19 @@ siglay_var.standard_name = 'ocean_sigma/general_coordinate'
 siglay_var[:] = original_siglay.astype('float') 
 
 B1_var = nc.createVariable(
-    'B1', np.single, ('time', 'sigma_layer', 'longitude', 'latitude'))
-B1_var.units = '[]'
-B1_var.standard_name = 'Biomass B1'
+    'PCBB1', np.single, ('time', 'sigma_layer', 'longitude','latitude' ))
+B1_var.units = 'g meters-3'
+B1_var.standard_name = 'PCB in B1'
 B1_var[:] = new_regular_B1.astype('float')
 
+
 B2_var = nc.createVariable(
-    'B2', np.single, ('time', 'sigma_layer', 'longitude', 'latitude'))
-B2_var.units = '[]'
-B2_var.standard_name = 'Biomass B2'
+    'PCBB2', np.single, ('time', 'sigma_layer', 'longitude', 'latitude'))
+B2_var.units = 'g meters-3'
+B2_var.standard_name = 'PCB in B2'
 B2_var[:] = new_regular_B2.astype('float')
 
 nc.close()
 print('New ROMSgrid NetCDF file created!')
 
-del new_regular_B1
-del new_regular_B2
-print('Clean var!')
+

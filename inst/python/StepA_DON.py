@@ -22,7 +22,6 @@ print(r.filename)
 print(r.file_name_output)
 
 
-
 # Step 1b: define kriging function
 # Create an RTree instance for spatial indexing using pyinterp
 mesh = pyinterp.RTree()

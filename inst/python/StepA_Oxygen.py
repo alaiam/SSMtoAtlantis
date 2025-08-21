@@ -108,15 +108,6 @@ for d in range(0, siglay_size):
 print('Interpolation variables done!')
 
 
-import matplotlib.pyplot as plt
-plt.figure(figsize=(10, 10))
-plt.pcolormesh(mx, my, new_regular_O2[400][9], cmap='viridis')
-plt.colorbar(label='O2')
-plt.title('Interpolated O2')
-plt.xlabel('Longitude')
-plt.ylabel('Latitude')
-plt.show()
-
 # Create a new NetCDF file with the interpolated data
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Save the interpolated data to a new NetCDF file

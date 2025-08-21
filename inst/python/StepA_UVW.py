@@ -17,7 +17,7 @@ import pyproj
 import sys
 
 ###########
-# Step 1a: Check filename and file_name_output sent from r 
+# Step 1a: Check filename and file_name_output sent from r
 
 filename = r.filename
 file_name_output = r.file_name_output
@@ -36,7 +36,6 @@ def kriging_universal(original_values, original_lon, original_lat, new_lat, new_
     kriging, neighbors = mesh.universal_kriging(np.vstack(( new_lon.ravel(), new_lat.ravel())).T, within=True, k=3*3,
                                                 covariance='matern_12', alpha=1_000_000, num_threads=0)
     return kriging.reshape(new_lon.shape)
-
 
 
 ###########
@@ -90,7 +89,7 @@ original_lon = lon
 
 # Open the original latitude, longitude, from each nele
 
-nele_infos = pd.read_excel('/home/atlantis/amps_hydrodynamics/Workflow/Step A/ssm_psimf_element_info.xlsx', index_col=0)
+nele_infos = pd.read_excel(r.ssm_info, index_col=0)
 nele_infos = nele_infos[nele_infos['target_cell'] >0]
 original_latc = np.array(nele_infos['latc']) 
 original_lonc = np.array(nele_infos['lonc'])  

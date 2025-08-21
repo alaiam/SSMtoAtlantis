@@ -4,6 +4,7 @@
 ###########
 # import packages
 import numpy as np
+import pandas as pd
 import xarray as xr
 import netCDF4
 import datetime as dt
@@ -20,11 +21,10 @@ file_name_output = r.file_name_output
 print(r.filename)
 print(r.file_name_output)
 
-# Step 1b: define kriging function
 
+# Step 1b: define kriging function
 # Create an RTree instance for spatial indexing using pyinterp
 mesh = pyinterp.RTree()
-#(original_values=org_sed, original_lon=original_lon, original_lat=original_lat, new_lon=my, new_lat=mx)
 
 def kriging_universal(original_values, original_lon, original_lat, new_lat, new_lon):
     # Pack the original data into the RTree for spatial indexing (erases previous data)
@@ -33,7 +33,10 @@ def kriging_universal(original_values, original_lon, original_lat, new_lat, new_
     kriging, neighbors = mesh.universal_kriging(np.vstack(( new_lon.ravel(), new_lat.ravel())).T, within=True, k=3*3,
                                                 covariance='matern_12', alpha=1_000_000, num_threads=0)
     return kriging.reshape(new_lon.shape)
-print('Function defined!')
+
+
+
+
 ###########
 # Step 2b: open netCDF file
 # Open the NetCDF file and read the original Salish Sea Model data
@@ -75,8 +78,9 @@ original_siglev = np.array([-0., -0.03162277, -0.08944271, -0.16431676, -0.25298
 original_time = np.arange(0, 365, 0.5)
 
 #######
-# Step 2d: Start interpolation of variables like PCB in phyto 1 and 2
+# Step 2d: Start interpolation of variables like temperature, salinity and sigma layer values
 # Define the dimensions of the data
+siglay_size = len(original_siglay)
 time_size = len(original_time)
 
 # Variables
@@ -84,33 +88,29 @@ time_size = len(original_time)
 original_lat = lat
 original_lon = lon 
 
-# Create empty arrays to store the interpolated PBC1, PBC2
+# Create empty arrays to store the interpolated temperature, salinity, and sigma layer values
 
-new_regular_POCsed = np.full((len(original_time), len(reg_lon), len(reg_lat)), np.nan)
-new_regular_PONsed = np.full((len(original_time), len(reg_lon), len(reg_lat)), np.nan)
-
+new_regular_NH4 = np.full((len(original_time), len(
+    original_siglay), len(reg_lon), len(reg_lat)), np.nan)
+new_regular_NO3 = np.full((len(original_time), len(
+    original_siglay), len(reg_lon), len(reg_lat)), np.nan)
 
 # Loop over each depth layer and interpolate the data onto the regular grid
+for d in range(0, siglay_size):
   for t in range(0, time_size):  # Loop over time steps
-        org_POC = ssm_solution.POCSD[t].values # Extract POC in sed 
-        org_PON = ssm_solution.PONSD[t].values # Extract PON in sed 
+    
+        # Extract data
+
+        org_NH4 = ssm_solution.NH4[t][d].values  # Extract NH4 values
+        org_NO3 = ssm_solution.NO3[t][d].values  # Extract NO3 values
         
-        #Krigging
-        new_regular_POCsed[t][:] = kriging_universal(
-            org_POC, original_lon, original_lat, my, mx)
-        new_regular_PONsed[t][:] = kriging_universal(
-            org_PON, original_lon, original_lat, my, mx)
+        # Krigging
+        new_regular_NO3[t][d][:] = kriging_universal(
+            org_NO3, original_lon, original_lat, my, mx)
+        new_regular_NH4[t][d][:] = kriging_universal(
+            org_NH4, original_lon, original_lat, my, mx)
 
 print('Interpolation variables done!')
-
-import matplotlib.pyplot as plt
-plt.figure(figsize=(10, 10))
-plt.pcolormesh(mx, my, new_regular_POCsed[500], cmap='viridis')
-plt.colorbar(label='PCB sed')
-plt.title('Interpolated PCB in sed')
-plt.xlabel('Longitude')
-plt.ylabel('Latitude')
-plt.show()
 
 # Create a new NetCDF file with the interpolated data
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,6 +128,7 @@ nc.history = '{0} creation of regular grid NetCDF file by Javier Porobic'.format
 # Create NetCDF variables and set attributes
 lat_dim = nc.createDimension('latitude', len(reg_lat))
 lon_dim = nc.createDimension('longitude', len(reg_lon))
+siglev_dim = nc.createDimension('sigma_layer', siglay_size)
 time_dim = nc.createDimension('time', time_size)
 
 lat_var = nc.createVariable('latitude', np.single, ('latitude'))
@@ -149,22 +150,28 @@ time_var.format = 'modified julian day (MJD)'
 time_var.time_zone = 'UTC'
 time_var[:] = original_time.astype('int')
 
+siglay_var = nc.createVariable('siglay', np.single, ('sigma_layer'))
+siglay_var.units = 'sigma_layers'
+siglay_var.standard_name = 'ocean_sigma/general_coordinate'
+siglay_var[:] = original_siglay.astype('float') 
+
+NH4_var = nc.createVariable(
+    'NH4', np.single, ('time', 'sigma_layer', 'longitude','latitude' ))
+NH4_var.units = '[]'
+NH4_var.standard_name = 'sea_water_NH4'
+NH4_var[:] = new_regular_NH4.astype('float')
 
 
+NO3_var = nc.createVariable(
+    'NO3', np.single, ('time', 'sigma_layer', 'longitude', 'latitude'))
+NO3_var.units = '[]'
+NO3_var.standard_name = 'NO3 concentration'
+NO3_var[:] = new_regular_NO3.astype('float')
 
-POC_var = nc.createVariable(
-    'POC', np.single, ('time', 'longitude', 'latitude'))
-POC_var.units = 'g meters-3'
-POC_var.standard_name = 'POC in sed'
-POC_var[:] = new_regular_POCsed.astype('float')
-
-PON_var = nc.createVariable(
-    'PON', np.single, ('time', 'longitude', 'latitude'))
-PON_var.units = 'g meters-3'
-PON_var.standard_name = 'PON in sed'
-PON_var[:] = new_regular_PONsed.astype('float')
 
 nc.close()
 print('New ROMSgrid NetCDF file created!')
 
-
+del new_regular_NH4
+del new_regular_NO3
+print('Clean var!')
