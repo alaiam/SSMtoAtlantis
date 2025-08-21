@@ -24,7 +24,7 @@ StepA <- function(year, variable, scenario, filename) {
   }
 
   scenario <- tolower(scenario)
-  path <- here::here("Atlantis_inputs", scenario, year)
+  path <- here::here("File_regular_grid", scenario, year)
   if (!dir.exists(path)) dir.create(path, recursive = TRUE)
 
   script_map <- list(
@@ -42,16 +42,21 @@ StepA <- function(year, variable, scenario, filename) {
   if (length(group) == 0) stop("Invalid variable group.")
 
   suffix <- group
-  script <- paste0("python/StepA_", suffix, ".py")
+  script <- system.file("python", paste0("StepA_", suffix, ".py"), package = "SSMtoAtlantis")
   file_output <- file.path(path, paste0("regular_grid_", suffix, "_", scenario, "_", year, ".nc"))
 
-  filename <- r_to_py(filename)
-  file_name_output <- r_to_py(file_output)
-
+  filename <- reticulate::r_to_py(filename)
+  file_name_output <- reticulate::r_to_py(file_output)
+  assign("file_name_output", reticulate::r_to_py(file_output), envir = .GlobalEnv)
+  if (suffix=="UVW"){
+    ssm_info <- system.file("python", paste0("ssm_psimf_element_info.xlsx"), package = "SSMtoAtlantis")
+    assign("ssm_info", reticulate::r_to_py(ssm_info), envir = .GlobalEnv)
+    print(ssm_info)
+  }
   print(filename)
   print(file_output)
 
-  py_run_file(script)
+  reticulate::py_run_file(script)
 
   invisible(file_output)
 }

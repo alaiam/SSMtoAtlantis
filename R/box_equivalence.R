@@ -16,7 +16,7 @@
 #' @examples
 #' SSM_file_path        <- "/nfsdata/SSM_example/HYD"
 #' SSM_file_name        <- "ssm_00117.nc"
-#' RegularSSM_file_path <- "here(File_regular_grid/bau/2011)"
+#' RegularSSM_file_path <- "here::here(File_regular_grid/bau/2011)"
 #' RegularSSM_file_name <- "regular_grid_TS_2011.nc"
 #' box_equivalence(SSM_file_path, SSM_file_name,
 #'                             RegularSSM_file_path, RegularSSM_file_name)
@@ -32,13 +32,15 @@ box_equivalence <- function(SSM_file_path,SSM_file_name,
 ###########################################################################
 # Read data
 # read first ROMS data for depth and grid info - assumes this does not change between time steps and ROMS files
-roms <- tidync(paste0(RegularSSM_file_path,"/", RegularSSM_file_name))
+roms <- tidync::tidync(paste0(RegularSSM_file_path,"/", RegularSSM_file_name))
 
 # read Atlantis BGM
-atlantis_bgm <- read_bgm(here("R/PugetSound_89b_070116.bgm"))
+atlantis_bgm <- rbgm::read_bgm(system.file("PugetSound_89b_070116.bgm"), package = "SSMtoAtlantis")
+
+
 # Read SSM data for position of the siglev and the siglay --> they were interpolated in Javier code and then
 # it is not the exact value anymore
-ssm <- tidync(paste0(SSM_file_path,"/", SSM_file_name))
+ssm <- tidync::tidync(paste0(SSM_file_path,"/", SSM_file_name))
 
 
 ###########################################################################
@@ -229,6 +231,6 @@ atlantis_depth_overlap <- atlantis_depth_overlap %>%
 box_composition <- merge(atlantis_depth_overlap, boxes_rho_join, by=".bx0")
 box_composition2 <- box_composition[,c(-11,-12,-13,-14,-15,-16,-17,-18,-19,-20,-21,-22,-23,-26,-27,-28)]
 write.csv(box_composition2,
-          paste0(here("R/code/box_composition.csv")), row.names =F)
+          paste0(here::here("R/code/box_composition.csv")), row.names =F)
 }
 

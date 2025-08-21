@@ -33,7 +33,7 @@ roms <- tidync::tidync(paste0(RegularSSM_file_path,"/", RegularSSM_file_name))
 
 
 # read Atlantis BGM
-atlantis_bgm <- read_bgm(here("R/PugetSound_89b_070116.bgm"))
+atlantis_bgm <- rbgm::read_bgm(system.file("PugetSound_89b_070116.bgm"), package = "SSMtoAtlantis")
 # Read SSM data for position of the siglev and the siglay --> they were interpolated in Javier code and then
 # it is not the exact value anymore
 ssm <- tidync::tidync(paste0(SSM_file_path,"/", SSM_file_name))

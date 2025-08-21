@@ -21,7 +21,7 @@ preprocess <- function() {
     source("python/Start_Salish_Sea_env.R")
     message("✓ Python environment `Salish_Sea_env` started.")
   } else {
-    warning("⚠ File 'Start_Salish_Sea_env.R' not found in /python/")
+    warning("⚠ File 'Start_Salish_Sea_env.R' not found in python/")
   }
 
   if (file.exists("R/code/box_composition_ww.csv")) {
