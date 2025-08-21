@@ -5,13 +5,14 @@
 input_path <- here::here("File_regular_grid", scenario, year)
 filename <- paste0("/regular_grid_TS_", scenario , "_",year, ".nc")
 output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
-
+print("Path defined")
+print(output_path)
 
 ###########################################################################
 # Read data ROMS data
-roms <- tidync(paste0(input_path,filename))
-box_composition <- read.csv(here("R/code/box_composition.csv"))
-
+roms <- tidync::tidync(paste0(input_path,filename))
+box_composition <- read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
+print("Grid correspondance loaded")
 ###########################################################################
 
 # get list of ROMS variables
@@ -33,7 +34,7 @@ out <- (1:730)[!1:730 %in% files]
 step_file <- out
 
 temperature_dim <- roms_vars %>% dplyr::filter(name==c("temp")) %>% pluck('grd')
-
+print("Temperature variable open")
 # load entire dataset #
 variable_before_Atlantis2 <- roms %>%
   tidync::activate(temperature_dim) %>%
@@ -47,16 +48,23 @@ variable_before_Atlantis2 <- roms %>%
     roms_layer = sigma_layer, time = time)
 gc()  # free unsused memory
 cores_possible_memory <- as.numeric(system("awk '/MemAvailable/ {print $2}' /proc/meminfo", intern = TRUE)) / 1024 /1000/8
-cl=ceilling(min(detectCores()-1, cores_possible_memory))
-registerDoParallel(cl)
+cl=ceiling(min(parallel::detectCores()-1, cores_possible_memory))
+print(paste(cl, "cores are used"))
+doParallel::registerDoParallel(cl)
+sink(paste0("log_worker.txt"))
+print(paste("Log files\n"))
 
-foreach(days = step_file) %dopar%{
+foreach::foreach(days = step_file,
+  .packages = c("dplyr", "tidync", "ncdf4"),
+  .export   = c("variable_before_Atlantis2", "box_composition", "output_path", "year")
+  )%dopar%{
+  cat(paste0("Running d = ", days, " \n"))
 
-  variable_before_Atlantis<- variable_before_Atlantis2 %>% filter(time== days)
+  variable_before_Atlantis<- variable_before_Atlantis2 %>% filter(time == days)
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
 
   ###################################################################
-  time = sort(unique(variables_polygons$time))
+  time = as.numeric(sort(unique(variables_polygons$time)))
   box = 89
   layer = 6
   N_var = 2
@@ -94,28 +102,29 @@ foreach(days = step_file) %dopar%{
 
     }
   }
+
   ###################################################################################
   # Define nc file
   ###################################################################################
   # Define dimensions
   z_dim <- ncdim_def("z","layerNum", 1:(layer+1))
   b_dim <- ncdim_def("b","boxNum", 0:(box-1))
-  t_dim <- ncdim_def("t",paste0("seconds since ",Nyear,"-01-01"), (time-1)*60*60)
+  t_dim <- ncdim_def("t",paste0("seconds since ",year,"-01-01"), (time-1)*60*60)
   # Define variables
   z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
   b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
-  t_var <- ncvar_def("t", "double", dim = list(t_dim), units = paste0("seconds since ",Nyear,"-01-01"), longname = "t")
+  t_var <- ncvar_def("t", "double", dim = list(t_dim), units = paste0("seconds since ",year,"-01-01"), longname = "t")
   temperature <- ncvar_def("temperature", "double", dim = list( z_dim,b_dim, t_dim),
                            units = "°C", missval = NA, longname = "Temperature")
   salinity <- ncvar_def("salinity", "double", dim = list( z_dim,b_dim, t_dim),
                         units = "g.L-1", missval = NA, longname = "Salinity")
-  output_filename = paste0("Physical_var_AtlantisTS_", days, ".nc")
+  output_filename = paste0("/Physical_var_AtlantisTS_", days, ".nc")
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
+  cat(paste0(nc_filename, " \n"))
   nc <- nc_create(nc_filename, vars = list(temperature = temperature, salinity = salinity))
 
-  # Put dimensions and variables in the NetCDF file
-
+ # Put dimensions and variables in the NetCDF file
   ncvar_put(nc, z_var, 1:(layer+1))
   ncvar_put(nc, b_var, 0:(box-1))
   ncvar_put(nc, t_var, (time-1)*60*60)
@@ -140,5 +149,7 @@ foreach(days = step_file) %dopar%{
 
   # Close the NetCDF file
   nc_close(nc)
-}
-end_time <- Sys.time()
+  cat(paste0("Netcdf for d = ", days, "created \n"))
+  }
+registerDoSEQ()
+gc()

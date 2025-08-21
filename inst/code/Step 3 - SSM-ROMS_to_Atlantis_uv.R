@@ -11,7 +11,7 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 ###########################################################################
 # Load grid information
 
-atlantis_bgm <- read_bgm(paste(path,"PugetSound_89b_070116.bgm", sep = ""))
+atlantis_bgm <- rbgm::read_bgm(system.file("PugetSound_89b_070116.bgm"), package = "SSMtoAtlantis")
 atlantis_sf <- atlantis_bgm %>% box_sf()
 ###########################################################################
 
@@ -37,7 +37,7 @@ full_face_composition$uvec <- list
 
 ###########################################################################
 # Read data ROMS data
-roms_u <- tidync(paste(input_path,filename, sep = ""))
+roms_u <- tidync::tidync(paste(input_path,filename, sep = ""))
 
 # get list of ROMS variables
 roms_vars_u <- tidync::hyper_grids(roms_u) %>% # all available grids in the ROMS ncdf
@@ -47,7 +47,7 @@ roms_vars_u <- tidync::hyper_grids(roms_u) %>% # all available grids in the ROMS
       dplyr::mutate(grd=x)
   })
 
-roms_v <- tidync(paste(input_path,filename, sep = ""))
+roms_v <- tidync::tidync(paste(input_path,filename, sep = ""))
 
 # get list of ROMS variables
 roms_vars_v <- tidync::hyper_grids(roms_v) %>% # all available grids in the ROMS ncdf
@@ -60,7 +60,6 @@ roms_vars_v <- tidync::hyper_grids(roms_v) %>% # all available grids in the ROMS
 
 
 ####################################################################################
-
 
 u_dim <- roms_vars_u %>% dplyr::filter(name==c("u")) %>% pluck('grd')
 u_values <- roms_u %>%
@@ -106,9 +105,9 @@ foreach(days = pdt) %dopar%{
   library(sf)
   library(tidync)
   library(tidyverse)
-  print("Adrien")
-sub_u_values <- u_values %>% filter(time == days)
-sub_v_values <- v_values %>% filter(time == days)
+
+  sub_u_values <- u_values %>% filter(time == days)
+  sub_v_values <- v_values %>% filter(time == days)
 
 
 uv_values2<-  merge(sub_u_values,sub_v_values , by = c("longitude", "latitude", "roms_layer"))
@@ -184,7 +183,6 @@ Flux_between_polygon <- Polygons_to_dest %>%
   distinct() %>%
   ungroup()
 
-
 ###########################################################################
 # Hyperdiffusion correction:
 
@@ -203,9 +201,8 @@ Corr.Flux_between_polygon <- Flux_between_polygon %>%
 csv_filename <- paste0(output_path, "uv_", days,".csv")
 write.csv(Corr.Flux_between_polygon, csv_filename, row.names = F)
 }
-
-# stopCluster(cl)
-
+registerDoSEQ()
+gc()
 
 
 

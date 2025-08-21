@@ -1,7 +1,7 @@
 
 
-input_path <- here("Atlantis_daily_files",scenario,year,"B")
-output_path <- here("Atlantis_inputs",scenario,year)
+input_path <- here::here("Atlantis_daily_files",scenario,year,"B")
+output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameSP <- paste0(output_path, "/pugetsound_SSM_Atlantis_SP_",scenario,"_",year,".nc")
 nc_filename <- paste0(output_path, "/pugetsound_SSM_Atlantis_LP_",scenario,"_",year,".nc")
 list.file <- sort(list.files(input_path))

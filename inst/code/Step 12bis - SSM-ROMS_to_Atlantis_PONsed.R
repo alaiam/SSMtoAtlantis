@@ -8,8 +8,8 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 ###########################################################################
 # Read data ROMS data
-roms <- tidync(paste0(input_path,filename))
-box_composition <- read.csv(here("R/code/box_composition.csv"))
+roms <- tidync::tidync(paste0(input_path,filename))
+box_composition <- read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
 box_composition <- box_composition[box_composition$roms_layer==1,c(1,11,12)]
 
 ###########################################################################
@@ -21,14 +21,6 @@ roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncd
     roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
   })
-
-####
-atlantis_bgm <- read_bgm(paste(path,"PugetSound_89b_070116.bgm", sep = ""))
-atlantis_sf <- atlantis_bgm %>% box_sf()
-area  <- (atlantis_sf %>% ungroup %>%
-            st_drop_geometry()%>% select(area,box_id ))
-
-layer_thickness <- c(5,20,25,50,50,200)
 
 ############################################################################################
 ############################################################################################
@@ -73,7 +65,7 @@ foreach(days = step_file) %dopar%{
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude"))
 
   ###################################################################
-  time = sort(unique(variables_polygons$time))
+  time = as.numeric(sort(unique(variables_polygons$time)))
   box = 89
   atlantis_input_PON <- array(rep(NA,box*(layer+1)*length(time)), dim = c(box,length(time)))
 
@@ -99,7 +91,7 @@ foreach(days = step_file) %dopar%{
   t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
   PON <- ncvar_def("PON", "double", dim = list(b_dim, t_dim),
                    units = "mg.m-3", missval = NA, longname = "LPON")
-  output_filename = paste0("PON_sed_Atlantis_", days, ".nc")
+  output_filename = paste0("/PON_sed_Atlantis_", days, ".nc")
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
   nc <- nc_create(nc_filename, vars = list(PON = PON))
@@ -126,5 +118,6 @@ foreach(days = step_file) %dopar%{
   nc_close(nc)
 
 }
-
+registerDoSEQ()
+gc()
 

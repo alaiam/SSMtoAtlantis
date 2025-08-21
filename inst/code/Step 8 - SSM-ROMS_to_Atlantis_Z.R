@@ -1,15 +1,17 @@
 
+
 ###########################################################################
 # Path and names definition
 
 input_path <- here::here("File_regular_grid", scenario, year)
-filename <- paste0("/regular_grid_DON_", scenario , "_",year, ".nc")
+filename <- paste0("/regular_grid_Z_", scenario , "_",year, ".nc")
 output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
+
 
 ###########################################################################
 # Read data ROMS data
-roms <- tidync(paste0(input_path,filename))
-box_composition <- read.csv(here("R/code/box_composition.csv"))
+roms <- tidync::tidync(paste0(input_path,filename))
+box_composition <- read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
 
 ###########################################################################
 
@@ -21,45 +23,37 @@ roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncd
       dplyr::mutate(grd=x)
   })
 
-####
-atlantis_bgm <- read_bgm(paste(path,"PugetSound_89b_070116.bgm", sep = ""))
-atlantis_sf <- atlantis_bgm %>% box_sf()
-area  <- (atlantis_sf %>% ungroup %>%
-            st_drop_geometry()%>% select(area,box_id ))
-
-layer_thickness <- c(5,20,25,50,50,200)
-
 ############################################################################################
 ############################################################################################
 ############################################################################################
 step_file <- 1:730 #Days to divide the total files
 
-files <- sub("DON_Atlantis_", "", list.files(output_path))
+files <- sub("Zoo_Atlantis_", "", list.files(output_path))
 files <- sort(as.numeric(sub(".nc", "", files)))
 out <- (1:730)[!1:730 %in% files]
 step_file <- out
 
-RDON_dim <- roms_vars %>% dplyr::filter(name==c("RDON")) %>% pluck('grd')
+
+SZ_dim <- roms_vars %>% dplyr::filter(name==c("SZ")) %>% pluck('grd')
 
 
 variable_before_Atlantis2 <- roms %>%
-  tidync::activate(RDON_dim) %>%
+  tidync::activate(SZ_dim) %>%
   tidync::hyper_tibble(force = TRUE) %>%
-  dplyr::select(RDON, LDON, longitude, latitude, sigma_layer,time)%>%
+  dplyr::select(SZ, LZ, longitude, latitude, sigma_layer,time)%>%
   dplyr::rename(
-    RDON=RDON,
-    LDON=LDON,
+    SZ=SZ,
+    LZ=LZ,
     longitude = longitude,
     latitude = latitude,
     roms_layer = sigma_layer, time = time)
 
 
-
-gc() #free unused memory before parallelization
+gc()
 cores=detectCores()
 cl <- cores -1 #not to overload your computer
-cl <- 4 #not to overload your computer
-registerDoParallel(cl)
+cl <- makeCluster(4) #not to overload your computer
+registerDoParallel(4)
 
 foreach(days = step_file) %dopar%{
   # for (days in 1:length(step_file)){
@@ -74,18 +68,18 @@ foreach(days = step_file) %dopar%{
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
 
   ###################################################################
-  time = sort(unique(variables_polygons$time))
+  time = as.numeric(sort(unique(variables_polygons$time)))
   box = 89
   layer = 6
   N_var = 2
 
-  atlantis_input_RDON <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
-  atlantis_input_LDON <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
+  atlantis_input_SZ <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
+  atlantis_input_LZ <- array(rep(NA,box*(layer+1)*length(time)), dim = c((layer+1),box,length(time)))
 
   for (i in 0:(box-1)){
     for (t in 1:length(time)){
-      all.layers_RDON = rep(NA,6)   # define an empty vector to receive the values of the 6 layers for RDON
-      all.layers_LDON = rep(NA,6) # define an empty vector to receive the values of the 6 layers for LDON
+      all.layers_SZ = rep(NA,6)   # define an empty vector to receive the values of the 6 layers for SZ
+      all.layers_LZ = rep(NA,6) # define an empty vector to receive the values of the 6 layers for LZ
       # Calculate the layer
       for (j in 1:layer){
         subset <-variables_polygons %>%
@@ -93,23 +87,23 @@ foreach(days = step_file) %dopar%{
 
 
         if (dim(subset)[1] == 0){
-          all.layers_RDON[j] = NA
-          all.layers_LDON[j] = NA
+          all.layers_SZ[j] = NA
+          all.layers_LZ[j] = NA
         }else{
-          all.layers_RDON[j] <- (mean(subset$RDON, na.rm = T)*1000)[[1]] #g to mg
-          all.layers_LDON[j] <- (mean(subset$LDON, na.rm = T)*1000)[[1]] #g to mg
-          # all.layers_RDON[j] <- (mean(subset$RDON, na.rm = T)*area[i+1,1]*layer_thickness[j]*1000)[[1]] #redfield ratio
-          # all.layers_LDON[j] <- (mean(subset$LDON, na.rm = T)*area[i+1,1]*layer_thickness[j]*1000)[[1]] #redfield ratio
+          all.layers_SZ[j] <- (mean(subset$SZ, na.rm = T)*0.176*1000)[[1]] #redfield ratio
+          all.layers_LZ[j] <- (mean(subset$LZ, na.rm = T)*0.176*1000)[[1]] #redfield ratio
+          # all.layers_SZ[j] <- (mean(subset$SZ, na.rm = T)*area[i+1,1]*layer_thickness[j]*0.176*1000)[[1]] #redfield ratio
+          # all.layers_LZ[j] <- (mean(subset$LZ, na.rm = T)*area[i+1,1]*layer_thickness[j]*0.176*1000)[[1]] #redfield ratio
         }
       }
 
-      keep <- all.layers_RDON[is.na(all.layers_RDON)]
-      all.layers_RDON <- c(rev(all.layers_RDON[!is.na(all.layers_RDON)]),keep,NA)
-      atlantis_input_RDON[,i+1,t] <- all.layers_RDON
+      keep <- all.layers_SZ[is.na(all.layers_SZ)]
+      all.layers_SZ <- c(rev(all.layers_SZ[!is.na(all.layers_SZ)]),keep,NA)
+      atlantis_input_SZ[,i+1,t] <- all.layers_SZ
 
-      keep <- all.layers_LDON[is.na(all.layers_LDON)]
-      all.layers_LDON <- c(rev(all.layers_LDON[!is.na(all.layers_LDON)]),keep,NA)
-      atlantis_input_LDON[,i+1,t] <- all.layers_LDON
+      keep <- all.layers_LZ[is.na(all.layers_LZ)]
+      all.layers_LZ <- c(rev(all.layers_LZ[!is.na(all.layers_LZ)]),keep,NA)
+      atlantis_input_LZ[,i+1,t] <- all.layers_LZ
 
     }
   }
@@ -126,30 +120,30 @@ foreach(days = step_file) %dopar%{
   z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
   b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
   t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2095-01-01", longname = "t")
-  RDON <- ncvar_def("RDON", "double", dim = list( z_dim,b_dim, t_dim),
-                   units = "mgN", missval = NA, longname = "RDON")
-  LDON <- ncvar_def("LDON", "double", dim = list( z_dim,b_dim, t_dim),
-                   units = "g.L-1", missval = NA, longname = "LDON")
-  output_filename = paste0("DON_Atlantis_", days, ".nc")
+  SZ <- ncvar_def("SZ", "double", dim = list( z_dim,b_dim, t_dim),
+                  units = "mgN.m-3", missval = NA, longname = "SZ")
+  LZ <- ncvar_def("LZ", "double", dim = list( z_dim,b_dim, t_dim),
+                  units = "mgN.m-3", missval = NA, longname = "LZ")
+  output_filename = paste0("/Zoo_Atlantis_", days, ".nc")
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
-  nc <- nc_create(nc_filename, vars = list(RDON = RDON, LDON = LDON))
+  nc <- nc_create(nc_filename, vars = list(SZ = SZ, LZ = LZ))
 
-  # Put dimensions and variables in the NetCDF file
+  # Put dimensions and variaBbles in the NetCDF file
 
   ncvar_put(nc, z_var, 1:(layer+1))
   ncvar_put(nc, b_var, 0:(box-1))
   ncvar_put(nc, t_var, (time-1)*60*60)
-  ncvar_put(nc, RDON, atlantis_input_RDON, start = c(1,1,1),count = c( layer+1,box, length(time)))
-  ncvar_put(nc, LDON, atlantis_input_LDON, start = c(1,1,1),count = c( layer+1,box, length(time)))
+  ncvar_put(nc, SZ, atlantis_input_SZ, start = c(1,1,1),count = c( layer+1,box, length(time)))
+  ncvar_put(nc, LZ, atlantis_input_LZ, start = c(1,1,1),count = c( layer+1,box, length(time)))
 
-  # Add minimum and maximum values to RDON variable attributes
-  ncatt_put(nc, "RDON", "valid_min", -50)
-  ncatt_put(nc, "RDON", "valid_max", 200)
+  # Add minimum and maximum values to SZ variable attributes
+  ncatt_put(nc, "SZ", "valid_min", -50)
+  ncatt_put(nc, "SZ", "valid_max", 200)
 
-  # Add minimum and maximum values to LDON variable attributes
-  ncatt_put(nc, "LDON", "valid_min", 0)
-  ncatt_put(nc, "LDON", "valid_max", 2000)
+  # Add minimum and maximum values to LZ variable attributes
+  ncatt_put(nc, "LZ", "valid_min", 0)
+  ncatt_put(nc, "LZ", "valid_max", 2000)
 
   # Add dt attribute to t variable
   ncatt_put(nc, "t", "dt", 43200.0)
@@ -161,7 +155,6 @@ foreach(days = step_file) %dopar%{
 
   # Close the NetCDF file
   nc_close(nc)
-
 }
-
-
+registerDoSEQ()
+gc()

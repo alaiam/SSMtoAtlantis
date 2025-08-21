@@ -1,7 +1,7 @@
 
 
-input_path <- here("Atlantis_daily_files",scenario,year,"O2")
-output_path <- here("Atlantis_inputs",scenario,year)
+input_path <- here::here("Atlantis_daily_files",scenario,year,"O2")
+output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filename <- paste0(output_path, "/pugetsound_SSM_Atlantis_oxygen_",scenario,"_",year,".nc")
 
 

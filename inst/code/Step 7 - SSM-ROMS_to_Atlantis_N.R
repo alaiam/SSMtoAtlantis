@@ -8,8 +8,8 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 ###########################################################################
 # Read data ROMS data
-roms <- tidync(paste0(input_path,filename))
-box_composition <- read.csv(here("R/code/box_composition.csv"))
+roms <- tidync::tidync(paste0(input_path,filename))
+box_composition <- read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
 
 ###########################################################################
 
@@ -20,14 +20,6 @@ roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncd
     roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
   })
-
-####
-atlantis_bgm <- read_bgm(paste(path,"PugetSound_89b_070116.bgm", sep = ""))
-atlantis_sf <- atlantis_bgm %>% box_sf()
-area  <- (atlantis_sf %>% ungroup %>%
-            st_drop_geometry()%>% select(area,box_id ))
-
-layer_thickness <- c(5,20,25,50,50,200)
 
 ############################################################################################
 ############################################################################################
@@ -65,7 +57,7 @@ foreach(days = step_file) %dopar%{
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
 
   ###################################################################
-  time = sort(unique(variables_polygons$time))
+  time = as.numeric(sort(unique(variables_polygons$time)))
   box = 89
   layer = 6
   N_var = 2
@@ -117,7 +109,7 @@ foreach(days = step_file) %dopar%{
                    units = "mgN.m-3", missval = NA, longname = "NH4")
   NO3 <- ncvar_def("NO3", "double", dim = list( z_dim,b_dim, t_dim),
                    units = "mgN.m-3", missval = NA, longname = "NO3")
-  output_filename = paste0("N_Atlantis_", days, ".nc")
+  output_filename = paste0("/N_Atlantis_", days, ".nc")
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
   nc <- nc_create(nc_filename, vars = list(NH4 = NH4, NO3 = NO3))
@@ -149,3 +141,6 @@ foreach(days = step_file) %dopar%{
   # Close the NetCDF file
   nc_close(nc)
 }
+
+registerDoSEQ()
+gc()

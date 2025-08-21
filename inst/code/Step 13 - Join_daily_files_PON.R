@@ -1,6 +1,6 @@
 
-input_path <- here("Atlantis_daily_files",scenario,year,"PON")
-output_path <- here("Atlantis_inputs",scenario,year)
+input_path <- here::here("Atlantis_daily_files",scenario,year,"PON")
+output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameLPON <- paste0(output_path, "/pugetsound_SSM_Atlantis_RPON_",scenario,"_",year,".nc")
 nc_filenameRPON <- paste0(output_path, "/pugetsound_SSM_Atlantis_LPON_",scenario,"_",year,".nc")
 

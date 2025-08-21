@@ -1,6 +1,6 @@
 
-input_path <- here("Atlantis_daily_files",scenario,year,"PCB")
-output_path <- here("Atlantis_inputs",scenario,year)
+input_path <- here::here("Atlantis_daily_files",scenario,year,"PCB")
+output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameWC  <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB", PCB_congener, "_",scenario,"_",year,".nc")
 nc_filenamePON <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB", PCB_congener, "_PON_",scenario,"_",year,".nc")
 nc_filenameDON <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB", PCB_congener, "_DON_",scenario,"_",year,".nc")

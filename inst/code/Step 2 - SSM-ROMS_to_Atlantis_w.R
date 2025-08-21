@@ -9,7 +9,7 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 ###########################################################################
 # Read data ROMS data
-roms <- tidync(paste0(input_path,filename))
+roms <- tidync::tidync(paste0(input_path,filename))
 box_composition <- read.csv(here("R/code/box_composition_ww.csv"))
 layer_max <- read.csv(here("R/code/layer_max_ww.csv"))
 
@@ -44,7 +44,7 @@ ww_dim <- roms_vars %>% dplyr::filter(name==c("ww")) %>% pluck('grd')
 
 gc()  # free unsused memory
 cores_possible_memory <- as.numeric(system("awk '/MemAvailable/ {print $2}' /proc/meminfo", intern = TRUE)) / 1024 /1000/8
-cl=ceilling(min(detectCores()-1, cores_possible_memory))
+cl=ceiling(min(detectCores()-1, cores_possible_memory))
 registerDoParallel(cl)
 
 variable_before_Atlantis <- roms %>%
@@ -59,14 +59,11 @@ variable_before_Atlantis <- roms %>%
 gc()
 foreach(days = step_file) %dopar%{
 
-
   variable_before_Atlantis2<- variable_before_Atlantis %>% filter(time==days)
-  print("1")
   merge_test <- merge(box_composition, variable_before_Atlantis2, by = c("latitude", "longitude", "roms_layer"))
-  print("2")
 
   ###################################################################
-  time = sort(unique(merge_test$time))          # To adapt after time intergration
+  time = as.numeric(sort(unique(merge_test$time)))          # To adapt after time intergration
   box = 89
   layer = 6
 
@@ -95,16 +92,12 @@ foreach(days = step_file) %dopar%{
   }
   atlantis_input_ww <- atlantis_input_ww*12*60*60
 
-  print("3")
-
-
   table_flux_ww <- melt(atlantis_input_ww, varnames = c("Layer", "Polygon #", "time"), value.name = "water.exchange") %>%
     mutate(`Polygon #` = `Polygon #` - 1,
            `adjacent box` = `Polygon #`,
            Layer = Layer - 1,
            Layer_dest = Layer + 1,
            time = min(merge_test$time) - 1 + time)
-  print("4")
 
   table_flux_ww <- table_flux_ww %>% left_join(layer_max, by = "Polygon #")
 
@@ -116,7 +109,7 @@ foreach(days = step_file) %dopar%{
   output_filename <- paste0("flux_ww_", days,".csv")
   csv_filename <- paste0(output_path, output_filename)
   write.csv(table_flux_ww, csv_filename, row.names = F)
-  print("5")
 
 }
-
+registerDoSEQ()
+gc()

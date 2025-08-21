@@ -9,9 +9,9 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 ###########################################################################
 # Read data ROMS data
-roms <-     tidync(paste0(input_path,filename))
-roms_sed <- tidync(paste0(input_path,filename_sed))
-box_composition <- read.csv(here("R/code/box_composition.csv"))
+roms <-     tidync::tidync(paste0(input_path,filename))
+roms_sed <- tidync::tidync(paste0(input_path,filename_sed))
+box_composition <- read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
 
 ###########################################################################
 
@@ -29,14 +29,6 @@ roms_sed_vars <- tidync::hyper_grids(roms_sed) %>% # all available grids in the 
     roms_sed  %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
   })
-
-####
-atlantis_bgm <- read_bgm(paste(path,"PugetSound_89b_070116.bgm", sep = ""))
-atlantis_sf <- atlantis_bgm %>% box_sf()
-area  <- (atlantis_sf %>% ungroup %>%
-            st_drop_geometry()%>% select(area,box_id ))
-
-layer_thickness <- c(5,20,25,50,50,200)
 
 ############################################################################################
 ############################################################################################
@@ -102,7 +94,7 @@ foreach(days = step_file) %dopar%{
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
   variables_sed <- merge(box_composition, variable_before_Atlantis_sed, by = c("latitude", "longitude"))
   ###################################################################
-  time = sort(unique(variables_polygons$time))
+  time = as.numeric(sort(unique(variables_polygons$time)))
   box = 89
   layer = 6
   N_var = 2
@@ -171,7 +163,7 @@ foreach(days = step_file) %dopar%{
                        units = "mg.m-3", missval = 0, longname = "PCB_POC")
   PCB_DOC <- ncvar_def("PCB_DOC", "double", dim = list( z_dim,b_dim, t_dim),
                        units = "mg.m-3", missval = 0, longname = "PCB_DOC")
-  output_filename = paste0("PCB_Atlantis_", days, ".nc")
+  output_filename = paste0("/PCB_Atlantis_", days, ".nc")
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
   nc <- nc_create(nc_filename, vars = list(PCB_WC = PCB_WC, PCB_POC = PCB_POC, PCB_DOC = PCB_DOC))
@@ -210,4 +202,5 @@ foreach(days = step_file) %dopar%{
 
 }
 
-
+registerDoSEQ()
+gc()
