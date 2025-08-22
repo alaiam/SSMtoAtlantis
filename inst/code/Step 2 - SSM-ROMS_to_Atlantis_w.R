@@ -10,9 +10,10 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 ###########################################################################
 # Read data ROMS data
 roms <- tidync::tidync(paste0(input_path,filename))
-box_composition <- read.csv(here("R/code/box_composition_ww.csv"))
-layer_max <- read.csv(here("R/code/layer_max_ww.csv"))
+box_composition <- read.csv(system.file("code/box_composition_ww.csv", package = "SSMtoAtlantis"))
 
+
+layer_max <- read.csv(system.file("code/layer_max_ww.csv", package = "SSMtoAtlantis"))
 # get list of ROMS variables
 roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncdf
   pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table

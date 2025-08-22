@@ -1,9 +1,6 @@
 #!/bin/bash
 # File name: StepA_UV.py
 
-# library(reticulate)
-# use_condaenv("Salish_sea_env") 
-
 ###########
 # import packages
 import numpy as np

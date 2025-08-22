@@ -10,4 +10,4 @@ conda create -n Salish_sea_env --file SSMtoAtlantis/inst/Salish_sea_env_explicit
 # If pyproj and netCDF4 are still missing
 
 conda activate Salish_sea_env
-conda install pyproj netCDF4
+conda install pyproj netCDF4 openpyxl

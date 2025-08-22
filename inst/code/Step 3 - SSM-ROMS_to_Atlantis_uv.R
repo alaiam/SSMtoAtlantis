@@ -16,9 +16,9 @@ atlantis_sf <- atlantis_bgm %>% box_sf()
 ###########################################################################
 
 
-full_face_composition <- read.csv(paste0(path,"code/face_composition_uv.csv"))
+full_face_composition <- read.csv(system.file("code/face_composition_uv.csv", package = "SSMtoAtlantis"))
 names(full_face_composition)[c(9,10,11)] <- c("Polygon #","Face #", "adjacent box")
-uxy2 <- read.csv(paste0(path,"code/uxy2_uv_code.csv"))
+uxy2 <- read.csv(system.file("code/uxy2_uv_code.csv", package = "SSMtoAtlantis"))
 
 list <- list()
 for (i in 1:length(full_face_composition$uvec)){

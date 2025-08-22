@@ -35,8 +35,6 @@ def kriging_universal(original_values, original_lon, original_lat, new_lat, new_
     return kriging.reshape(new_lon.shape)
 
 
-
-
 ###########
 # Step 2b: open netCDF file
 # Open the NetCDF file and read the original Salish Sea Model data
