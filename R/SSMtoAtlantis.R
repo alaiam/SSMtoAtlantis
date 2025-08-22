@@ -11,10 +11,12 @@
 #' nutrients (NO3, NH4), phytoplankton (B1, B2), zooplankton (SZ, LZ)
 #' organic matters (LPON, LDON, RPON, RDON)))
 #'
-#' @returns
+#' @returns Nothing. Creates Atlantis inputs files for the all variables.
 #' @export
 #'
 #' @examples
+#' SSMtoAtlantis(2011, "status_quo", filename.hyd = "SSM2011_status_quo_hyd.nc",
+#'               filename.wq = "SSM2011_status_quo_wqm.nc")
 SSMtoAtlantis <- function(year, scenario, filename.hyd, filename.wq){
   .year <<- year
   .scenario <<- scenario

@@ -5,10 +5,11 @@
 #' @param scenario The name of the scenario used to produced SSM output
 #' @param filename The input filename, a NetCDF file which include SSM outputs on FVCOM grid.
 #'
-#' @returns
+#' @returns Nothing. Creates Atlantis inputs files for one variable.
 #' @export
 #'
 #' @examples
+#' var.SSMtoAtlantis(2011, "temperature", "status_quo", filename = "SSM2011_status_quo_hyd.nc")
 var.SSMtoAtlantis <- function(year, variable, scenario, filename){
 
   list.var = c("salinity","temperature",

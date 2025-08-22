@@ -12,6 +12,8 @@
 #' @importFrom ncdf4 nc_create ncvar_put ncvar_def ncatt_put nc_close
 #'
 #' @examples
+#' StepB(2011, "temperature", "status_quo")
+#'
 StepB <- function(year, variable, scenario, PCB_congener = "0"){
 
   select <- dplyr::select

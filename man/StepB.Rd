@@ -22,3 +22,7 @@ Nothing. Creates daily variable files.
 \description{
 StepB: From regular (ROMS like) grid to Atlantis intputs
 }
+\examples{
+StepB(2011, "temperature", "status_quo")
+
+}

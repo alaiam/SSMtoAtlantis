@@ -33,7 +33,7 @@ If this file already exists, you can skip to Step 1.
 \examples{
 SSM_file_path        <- "/nfsdata/SSM_example/HYD"
 SSM_file_name        <- "ssm_00117.nc"
-RegularSSM_file_path <- "here(File_regular_grid/bau/2011)"
+RegularSSM_file_path <- "here::here(File_regular_grid/bau/2011)"
 RegularSSM_file_name <- "regular_grid_TS_2011.nc"
 box_equivalence(SSM_file_path, SSM_file_name,
                             RegularSSM_file_path, RegularSSM_file_name)

@@ -12,6 +12,9 @@ setup_python_env(env_name = "Salish_sea_env", conda_path)
 \item{conda_path}{Character. Full path to the `bin` directory in the anaconda or miniconda folder
 used for your conda installation.}
 }
+\value{
+Nothing. Creates python environment needed for stepA.
+}
 \description{
 This function sets up a Python conda environment for the SSM to Atlantis translation
 developped in the SSMtoAtlantis package.

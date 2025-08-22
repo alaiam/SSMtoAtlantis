@@ -15,6 +15,12 @@ var.SSMtoAtlantis(year, variable, scenario, filename)
 
 \item{filename}{The input filename, a NetCDF file which include SSM outputs on FVCOM grid.}
 }
+\value{
+Nothing. Creates Atlantis inputs files for one variable.
+}
 \description{
 Title
+}
+\examples{
+var.SSMtoAtlantis(2011, "temperature", "status_quo", filename = "SSM2011_status_quo_hyd.nc")
 }

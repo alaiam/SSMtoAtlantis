@@ -10,12 +10,11 @@
 #' @param env_name Character. Name of the conda environment to create or use. Default is `"Salish_sea_env"`.
 #' @param conda_path Character. Full path to the `bin` directory in the anaconda or miniconda folder
 #' used for your conda installation.
-#'
-#'
+#' @returns Nothing. Creates python environment needed for stepA.
+#' @export
 #' @examples
 #' setup_python_env(env_name = "Salish_sea_env",
 #'   conda_path = "/home/atlantis/anaconda3/bin")
-
 
 setup_python_env <- function(env_name = "Salish_sea_env",
                              conda_path) {
@@ -30,13 +29,12 @@ setup_python_env <- function(env_name = "Salish_sea_env",
       "conda create -n ",
       env_name,
       " --file " ,
-      here::here("inst","Salish_sea_env_explicit.txt"))
-
+      system.file("Salish_sea_env_explicit.txt", package = "SSMtoAtlantis"))
     status <- system(cmd)
     if (status != 0) {
       stop("Environment creation failed. Check your conda installation")
     }else{
-      system(paste("conda install -y -n", env_name, "pyproj netCDF4"))
+      system(paste("conda install -y -n", env_name, "pyproj netCDF4 openpyxl"))
     }
 
     message("The env was successfully created")

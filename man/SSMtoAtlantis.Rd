@@ -21,7 +21,14 @@ It is a NetCDF file which include SSM outputs on FVCOM grid (variables are be
 nutrients (NO3, NH4), phytoplankton (B1, B2), zooplankton (SZ, LZ)
 organic matters (LPON, LDON, RPON, RDON)))}
 }
+\value{
+Nothing. Creates Atlantis inputs files for the all variables.
+}
 \description{
 SSMtoAtlantis: Function that creates Atlantis inputs from SSM outputs (for all
 the variables and in the correct Atlantis grid). It expect yearly files.
+}
+\examples{
+SSMtoAtlantis(2011, "status_quo", filename.hyd = "SSM2011_status_quo_hyd.nc",
+              filename.wq = "SSM2011_status_quo_wqm.nc")
 }
