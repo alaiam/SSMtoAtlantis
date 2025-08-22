@@ -93,12 +93,12 @@ foreach(days = step_file) %dopar%{
   }
   atlantis_input_ww <- atlantis_input_ww*12*60*60
 
-  table_flux_ww <- melt(atlantis_input_ww, varnames = c("Layer", "Polygon #", "time"), value.name = "water.exchange") %>%
+  table_flux_ww <- reshape2::melt(atlantis_input_ww, varnames = c("Layer", "Polygon #", "time"), value.name = "water.exchange") %>%
     mutate(`Polygon #` = `Polygon #` - 1,
            `adjacent box` = `Polygon #`,
            Layer = Layer - 1,
            Layer_dest = Layer + 1,
-           time = min(merge_test$time) - 1 + time)
+           time = min(as.numeric(merge_test$time)) - 1 + time)
 
   table_flux_ww <- table_flux_ww %>% left_join(layer_max, by = "Polygon #")
 
@@ -107,7 +107,7 @@ foreach(days = step_file) %dopar%{
     select(Layer, `Polygon #` ,time, water.exchange, `adjacent box`, Layer_dest)
 
 
-  output_filename <- paste0("flux_ww_", days,".csv")
+  output_filename <- paste0("/flux_ww_", days,".csv")
   csv_filename <- paste0(output_path, output_filename)
   write.csv(table_flux_ww, csv_filename, row.names = F)
 

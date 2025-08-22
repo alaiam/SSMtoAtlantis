@@ -7,12 +7,11 @@ filename <- paste0("/regular_grid_UVW_", scenario , "_",year, ".nc")
 output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 
-
 ###########################################################################
 # Load grid information
 
-atlantis_bgm <- rbgm::read_bgm(system.file("PugetSound_89b_070116.bgm"), package = "SSMtoAtlantis")
-atlantis_sf <- atlantis_bgm %>% box_sf()
+atlantis_bgm <- rbgm::read_bgm(system.file("PugetSound_89b_070116.bgm", package = "SSMtoAtlantis"))
+atlantis_sf <- atlantis_bgm %>% rbgm::box_sf()
 ###########################################################################
 
 
@@ -41,7 +40,7 @@ roms_u <- tidync::tidync(paste(input_path,filename, sep = ""))
 
 # get list of ROMS variables
 roms_vars_u <- tidync::hyper_grids(roms_u) %>% # all available grids in the ROMS ncdf
-  pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
+  purrr::pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
     roms_u %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
@@ -51,7 +50,7 @@ roms_v <- tidync::tidync(paste(input_path,filename, sep = ""))
 
 # get list of ROMS variables
 roms_vars_v <- tidync::hyper_grids(roms_v) %>% # all available grids in the ROMS ncdf
-  pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
+  purrr::pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
     roms_v %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
@@ -74,14 +73,10 @@ u_values <- roms_u %>%
      time = time)#%>%
   # filter(time >=360)
 
-
-
 v_values <- u_values  %>%
   dplyr::select(v, longitude, latitude, roms_layer, time)
 u_values <- u_values  %>%
   dplyr::select(u, longitude, latitude, roms_layer, time)
-
-
 
 pdt <- sort(unique(u_values$time))
 files <- sub("uv_","", list.files(output_path))
@@ -89,34 +84,21 @@ files <- sort(as.numeric(sub(".csv", "", files)))
 out <- (1:730)[!1:730 %in% files]
 pdt <- out
 
-
+gc()
 cores=detectCores()
 cl <- cores -1 #not to overload your computer
 cl <- 4 #not to overload your computer
 registerDoParallel(cl)
-
 gc()
-foreach(days = pdt) %dopar%{
-# for (day in 1:max(pdt)){
-  library(raster)#
-  library(ncdf4)
-  library(tabularaster)
-  library(rbgm)
-  library(sf)
-  library(tidync)
-  library(tidyverse)
-
+foreach::foreach(days = pdt,
+                 .packages = c("raster", "tidync", "ncdf4", "tabularaster", "rbgm", "sf", "tidyverse")) %dopar%{
   sub_u_values <- u_values %>% filter(time == days)
   sub_v_values <- v_values %>% filter(time == days)
 
-
-uv_values2<-  merge(sub_u_values,sub_v_values , by = c("longitude", "latitude", "roms_layer"))
-uv_values2<-  merge(uv_values2,uxy2 , by = c("latitude", "longitude"))
-
-
+   uv_values2<-  merge(sub_u_values,sub_v_values , by = c("longitude", "latitude", "roms_layer"))
+   uv_values2<-  merge(uv_values2,uxy2 , by = c("latitude", "longitude"))
 
 ######################### Process the value for the first part of the day
-
 
 for (i in 1:dim(full_face_composition)[1]){
   extract <- full_face_composition$uvec[i][[1]]
@@ -143,7 +125,6 @@ face_adj_box <- face_vector %>%select("FaceID", "adjacent box", "Polygon #")  %>
   ungroup() %>%
   select(-pair_key)
 
-
 face_vector <- face_vector %>%
   select("FaceID",  "cosine" , "sine" ,"atlantis_layer", "face_area" , "maxz" , "minz","lat","lon","new.u","new.v") %>%
   distinct() %>%
@@ -157,8 +138,6 @@ face_vector$z = (face_vector$new.u^2 + face_vector$new.v^2)^(1/2)
 # angle par rapport à u, la latitude, nommé a
 # a = atan(U/v) --> to obtain the angle of th vector: atan2(v, u)*180/pi
 face_vector$a = atan2(face_vector$new.v, face_vector$new.u)*180/pi
-
-
 
 ################ Calculate the speed perdilar to the face --> send in y
 Polygons_to_dest <- face_vector %>%
@@ -198,7 +177,7 @@ Corr.Flux_between_polygon <- Flux_between_polygon %>%
   mutate(Layer_dest = atlantis_layer) %>%
   select(atlantis_layer, `Polygon #`,`adjacent box`, Corr.water.transfert, Layer_dest, time)
 
-csv_filename <- paste0(output_path, "uv_", days,".csv")
+csv_filename <- paste0(output_path, "/uv_", days,".csv")
 write.csv(Corr.Flux_between_polygon, csv_filename, row.names = F)
 }
 registerDoSEQ()
