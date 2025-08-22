@@ -22,7 +22,7 @@ join_dailyfiles <- function(year, variable, scenario) {
                  "U", "V", "W",
                  "NO3", "NH4",
                  "SZ", "LZ", "MZ", "SP", "LP",
-                 "Oxygen", "LPON", "RPON", "RDON"),
+                 "O2", "LPON", "RPON", "RDON"),
     folder = c("TS", "TS",
                "uv", "uv", "uv",
                "N", "N",
@@ -69,7 +69,7 @@ join_dailyfiles <- function(year, variable, scenario) {
     source("R/code/Step 9 - Join_daily_files_Z.R")
   } else if (variable %in% c("SP", "LP")) {
     source("R/code/Step 9 - Join_daily_files_B.R")
-  } else if (variable == "Oxygen") {
+  } else if (variable == "O2") {
     source("R/code/Step 11 - Join_daily_files_O2.R")
   } else if (variable %in% c("LPON", "RPON")) {
     source("R/code/Step 13 - Join_daily_files_PON.R")

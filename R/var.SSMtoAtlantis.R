@@ -16,11 +16,11 @@ var.SSMtoAtlantis <- function(year, variable, scenario, filename){
                "U", "V", "W",
                "NO3", "NH4",
                "SZ", "LZ", "MZ", "SP", "LP",
-               "Oxygen","LPON","RPON",
+               "O2","LPON","RPON",
                "RDON")
 
   if(!variable%in%list.var) stop("The variable is not in SSM, please try:
-salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, Oxygen, LPON, RPON, RDON")
+salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, O2, LPON, RPON, RDON")
   print("var1")
   StepA(year = year, variable = variable, scenario = scenario, filename = filename)
   print("var2")

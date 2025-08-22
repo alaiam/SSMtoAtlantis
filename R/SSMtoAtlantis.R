@@ -59,7 +59,7 @@ SSMtoAtlantis <- function(year, scenario, filename.hyd, filename.wq){
   write.csv(step.time, "steptime.csv")
 
   print("O2")
-  var.SSMtoAtlantis(year = .year, variable = "Oxygen", scenario = .scenario, filename = .filename.wq)
+  var.SSMtoAtlantis(year = .year, variable = "O2", scenario = .scenario, filename = .filename.wq)
   step.time <- c(step.time,Sys.time())
   write.csv(step.time, "steptime.csv")
 

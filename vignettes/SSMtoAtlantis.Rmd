@@ -35,7 +35,7 @@ SSMtoAtlantis::StepA(year, "SZ",     scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "LPON",   scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "RDON",   scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "NO3",    scenario, filename = filename)
-SSMtoAtlantis::StepA(year, "Oxygen", scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "O2", scenario, filename = filename)
 ```
 
 # From regular grid to Atlantis grid (irregular polygons) daily files
@@ -55,7 +55,7 @@ SSMtoAtlantis::StepB(year, "SZ", scenario)
 SSMtoAtlantis::StepB(year, "LPON", scenario)
 SSMtoAtlantis::StepB(year, "RDON", scenario)
 SSMtoAtlantis::StepB(year, "NO3", scenario)
-SSMtoAtlantis::StepB(year, "Oxygen", scenario)
+SSMtoAtlantis::StepB(year, "O2", scenario)
 ```
 
 # From Atlantis grid (irregular polygons) daily files to yearly files

@@ -2,7 +2,7 @@
 #'
 #' @param year The year of the SSM outputs (numeric or string).
 #' @param variable The variable name to extract. Choice are:
-#' salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, Oxygen, LPON, RPON, RDON, PCB
+#' salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, O2, LPON, RPON, RDON, PCB
 #' @param scenario The name of the scenario used to produced SSM output
 #' @param PCB_congener When variable = PCB, PCB_congener informs the PCB congener number.
 #'
@@ -30,14 +30,14 @@ StepB <- function(year, variable, scenario, PCB_congener = "0"){
                "U", "V", "W",
                "NO3", "NH4",
                "SZ", "LZ", "MZ", "SP", "LP",
-               "Oxygen","LPON","RPON",
+               "O2","LPON","RPON",
                "RDON", "PCB")
   scenario <- tolower(scenario)
   path <- here::here("Atlantis_daily_files", scenario, year, variable)
   if (!dir.exists(path)) dir.create(path, recursive = TRUE)
 
   if(!variable%in%list.var) stop("The variable is not in SSM, please try:
-salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, Oxygen, LPON, RPON, RDON, PCB.
+salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, O2, LPON, RPON, RDON, PCB.
 For a pdf sum up, try all")
 
   if(variable== "PCB" & PCB_congener == "0") stop("PCB_congener needs to be between 118, 138 or 153")
@@ -60,7 +60,7 @@ For a pdf sum up, try all")
   if (variable == "SZ"|| variable =="LZ"|| variable =="MZ"){source(
     system.file("code/Step 8 - SSM-ROMS_to_Atlantis_Z.R", package = "SSMtoAtlantis"))}
 
-  if (variable == "Oxygen")                                {source(
+  if (variable == "O2")                                   {source(
     system.file("code/Step 10 - SSM-ROMS_to_Atlantis_O2.R", package = "SSMtoAtlantis"))}
 
   if (variable == "LPON"|| variable =="RPON")              {source(
