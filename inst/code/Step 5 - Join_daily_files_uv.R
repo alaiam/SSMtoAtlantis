@@ -4,15 +4,24 @@
 output_path <- here::here("Atlantis_inputs", scenario, year)
 
 
-uv_dir <- paste0(here(), "/Atlantis_daily_files/",scenario, "/", year,"/uv")
-ww_dir <- paste0(here(), "/Atlantis_daily_files/",scenario, "/", year,"/ww")
+input_path <- here::here("Atlantis_daily_files",scenario,year,"U")
+if(!dir.exists(input_path)){
+  input_path <- here::here("Atlantis_daily_files",scenario,year,"V")
+}
+if(!dir.exists(input_path)){
+  input_path <- here::here("Atlantis_daily_files",scenario,year,"W")
+}
+if(!dir.exists(input_path)){
+  stop("The daily files were not created.")
+}
+
 nc_filename <- paste0(output_path,"/pugetsound_SSM_Atlantis_uvw_",scenario,year,".nc")
 
 ###########################################################################
 # matrix dest_k, dest_b,
 
-table_flux_ww <- read.csv(paste0(ww_dir,"/flux_ww_1.csv"))
-table_flux_uv <- read.csv(paste0(uv_dir,"/uv_1.csv"))
+table_flux_ww <- read.csv(paste0(input_path,"/flux_ww_1.csv"))
+table_flux_uv <- read.csv(paste0(input_path,"/uv_1.csv"))
 
 
 table_flux_ww1 <- table_flux_ww %>%
@@ -51,9 +60,9 @@ exchange= array(rep(0,layer*Nbox*Nmaxdest), dim = c(Nmaxdest, layer,Nbox, ts))
 # Aggregation
 for (days in (1:ts)){
 
-  table_flux_ww <- read.csv(paste0(ww_dir,"/flux_ww_",days,".csv"))
+  table_flux_ww <- read.csv(paste0(input_path,"/flux_ww_",days,".csv"))
 
-  table_flux_uv <- read.csv(paste0(uv_dir,"/uv_",days,".csv"))
+  table_flux_uv <- read.csv(paste0(input_path,"/uv_",days,".csv"))
 
   table_flux_ww1 <- table_flux_ww %>%
     filter(time == days)%>%
@@ -95,13 +104,13 @@ for (days in (1:ts)){
 # Define dimensions
 z_dim <- ncdim_def("z","layerNum", 0:(layer-1))
 b_dim <- ncdim_def("b","boxNum", 0:(Nbox-1))
-t_dim <- ncdim_def("t","seconds since 2095-01-01", (seq(1,ts)-1)*60*60*12, unlim = T)
+t_dim <- ncdim_def("t",paste0("seconds since ",2095,"-01-01"), (seq(1,ts)-1)*60*60*12, unlim = T)
 dest_dim <- ncdim_def("dest", "Nb max of destinaions", 1:Nmaxdest)
 
 # Define variables
 z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
 b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
-t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2095-01-01", longname = "t")
+t_var <- ncvar_def("t", "double", dim = list(t_dim), units = paste0("seconds since ",2095,"-01-01"), longname = "t")
 dest_var <- ncvar_def("dest", "int", dim = list(dest_dim), units = "dest", longname = "dest")
 
 

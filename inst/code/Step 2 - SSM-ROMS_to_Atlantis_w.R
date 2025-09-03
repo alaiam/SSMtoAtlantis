@@ -113,4 +113,5 @@ foreach(days = step_file) %dopar%{
 
 }
 registerDoSEQ()
+rm(variable_before_Atlantis)
 gc()

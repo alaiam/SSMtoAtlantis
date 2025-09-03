@@ -33,7 +33,7 @@ StepA <- function(year, variable, scenario, filename) {
     N = c("NO3", "NH4"),
     Z = c("SZ", "LZ", "MZ"),
     B = c("SP", "LP"),
-    Oxygen = "O2",
+    O2 = "O2",
     PON = c("LPON", "RPON"),
     DON = "RDON"
   )

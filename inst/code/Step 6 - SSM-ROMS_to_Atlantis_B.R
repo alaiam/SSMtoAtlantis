@@ -108,11 +108,11 @@ for (i in 0:(box-1)){
 # Define dimensions
 z_dim <- ncdim_def("z","layerNum", 1:(layer+1))
 b_dim <- ncdim_def("b","boxNum", 0:(box-1))
-t_dim <- ncdim_def("t","seconds since 2095-01-01", (time-1)*60*60)
+t_dim <- ncdim_def("t",paste0("seconds since ",2095,"-01-01"), (time-1)*60*60)
 # Define variables
 z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
 b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
-t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2095-01-01", longname = "t")
+t_var <- ncvar_def("t", "double", dim = list(t_dim), units = paste0("seconds since ",2095,"-01-01"), longname = "t")
 B1 <- ncvar_def("B1", "double", dim = list( z_dim,b_dim, t_dim),
                          units = "mgN", missval = NA, longname = "B1")
 B2 <- ncvar_def("B2", "double", dim = list( z_dim,b_dim, t_dim),

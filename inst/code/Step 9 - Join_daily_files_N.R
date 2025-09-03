@@ -1,8 +1,15 @@
 
-input_path <- here::here("Atlantis_daily_files",scenario,year,"N")
+input_path <- here::here("Atlantis_daily_files",scenario,year,"NO3")
+if(!dir.exists(input_path)){
+  input_path <- here::here("Atlantis_daily_files",scenario,year,"NH4")
+}
+if(!dir.exists(input_path)){
+  stop("The daily files were not created.")
+}
 output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameNO3 <- paste0(output_path, "/pugetsound_SSM_Atlantis_NO3_",scenario,"_",year,".nc")
 nc_filenameNH4 <- paste0(output_path, "/pugetsound_SSM_Atlantis_NH4_",scenario,"_",year,".nc")
+list.file <- sort(list.files(input_path))
 
 time = seq(0,730*12*60*60-1, 12*60*60)
 

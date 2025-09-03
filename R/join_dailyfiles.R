@@ -34,20 +34,13 @@ join_dailyfiles <- function(year, variable, scenario) {
     stop("The variable is not in SSM. Please try one of:\n", paste(var_map$variable, collapse = ", "))
   }
 
-  folder_name <- var_map$folder[var_map$variable == variable]
-
-  output_path <- here::here(paste0("intermediate output archive/output_", scenario, "_", year, "_", folder_name))
-  final_path <- here::here(paste0("Final outputs/", scenario, "/", year))
+  output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
+  final_path <- here::here("Atlantis_inputs", scenario, year)
 
   message("Checking files for variable: ", variable, " | year: ", year, " | scenario: ", scenario)
   message("→ Output path: ", output_path)
 
   if (!dir.exists(final_path)) dir.create(final_path, recursive = TRUE)
-
-  # Special case: U, V, W need a different folder check
-  if (variable %in% c("U", "V", "W")) {
-    output_path <- here::here(paste0("intermediate output archive/output_", scenario, "_", year, "_ww"))
-  }
 
   # If not enough daily files, re-run StepB and recall
   if (length(list.files(output_path)) < 730) {
@@ -60,20 +53,23 @@ join_dailyfiles <- function(year, variable, scenario) {
   message("All daily files found. Sourcing join script...")
 
   if (variable %in% c("salinity", "temperature")) {
-    source("R/code/Step 4 - Join TS daily files.R")
+    source(system.file("code/Step 4 - Join TS daily files.R", package = "SSMtoAtlantis"))
   } else if (variable %in% c("U", "V", "W")) {
-    source("R/code/Step 5 - Join_daily_files_uv.R")
+    source(system.file("code/Step 5 - Join_daily_files_uv.R", package = "SSMtoAtlantis"))
   } else if (variable %in% c("NO3", "NH4")) {
-    source("R/code/Step 9 - Join_daily_files_N.R")
+    source(system.file("code/Step 9 - Join_daily_files_N.R", package = "SSMtoAtlantis"))
   } else if (variable %in% c("SZ", "LZ", "MZ")) {
-    source("R/code/Step 9 - Join_daily_files_Z.R")
+    source(system.file("code/Step 9 - Join_daily_files_Z.R", package = "SSMtoAtlantis"))
   } else if (variable %in% c("SP", "LP")) {
-    source("R/code/Step 9 - Join_daily_files_B.R")
+    source(system.file("code/Step 9 - Join_daily_files_B.R", package = "SSMtoAtlantis"))
   } else if (variable == "O2") {
-    source("R/code/Step 11 - Join_daily_files_O2.R")
+    source(system.file("code/Step 11 - Join_daily_files_O2.R", package = "SSMtoAtlantis"))
   } else if (variable %in% c("LPON", "RPON")) {
-    source("R/code/Step 13 - Join_daily_files_PON.R")
+    source(system.file("code/Step 13 - Join_daily_files_PON.R", package = "SSMtoAtlantis"))
   } else if (variable %in% c("RDON", "DON")) {
-    source("R/code/Step 15 - Join_daily_files_DON.R")
+    source(system.file("code/Step 15 - Join_daily_files_DON.R", package = "SSMtoAtlantis"))
+  } else if (variable == "PCB") {
+    source(system.file("code/Step 17 - Join_daily_files_PCB_B.R", package = "SSMtoAtlantis"))
+    source(system.file("code/Step 19 - Join_daily_files_PCB.R", package = "SSMtoAtlantis"))
   }
 }

@@ -1,13 +1,19 @@
 
 
-input_path <- here::here("Atlantis_daily_files",scenario,year,"TS")
+input_path <- here::here("Atlantis_daily_files",scenario,year,"temperature")
+if(!dir.exists(input_path)){
+  input_path <- here::here("Atlantis_daily_files",scenario,year,"salinity")
+}
+if(!dir.exists(input_path)){
+  stop("The daily files were not created.")
+}
+
 output_path <- here::here("Atlantis_inputs",scenario,year)
   nc_filenameT <- paste0(output_path, "/pugetsound_SSM_Atlantis_temperature_",scenario,"_",year,".nc")
   nc_filenameS <- paste0(output_path, "/pugetsound_SSM_Atlantis_salinity_",scenario,"_",year,".nc")
 
 
 list.file <- sort(list.files(input_path))
-
 
 ##############################
 ##### File definition

@@ -1,4 +1,4 @@
-input_path <- here::here("Atlantis_daily_files",scenario,year,"TS")
+input_path <- here::here("Atlantis_daily_files",scenario,year,"PCB_B", congener)
 output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameSP <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB",PCB_congener,"_SP_",scenario,"_",year,".nc")
 nc_filenameLP <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB",PCB_congener,"_LP_",scenario,"_",year,".nc")

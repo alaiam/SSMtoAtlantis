@@ -1,5 +1,15 @@
 
-input_path <- here::here("Atlantis_daily_files",scenario,year,"Z")
+input_path <- here::here("Atlantis_daily_files",scenario,year,"SZ")
+if(!dir.exists(input_path)){
+  input_path <- here::here("Atlantis_daily_files",scenario,year,"MZ")
+}
+if(!dir.exists(input_path)){
+  input_path <- here::here("Atlantis_daily_files",scenario,year,"LZ")
+}
+if(!dir.exists(input_path)){
+  stop("The daily files were not created.")
+}
+
 output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameSZ <- paste0(output_path, "/pugetsound_SSM_Atlantis_SZ_",scenario,"_",year,".nc")
 nc_filenameMZ <- paste0(output_path, "/pugetsound_SSM_Atlantis_MZ_",scenario,"_",year,".nc")
