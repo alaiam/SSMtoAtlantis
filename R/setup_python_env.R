@@ -34,7 +34,7 @@ setup_python_env <- function(env_name = "Salish_sea_env",
     if (status != 0) {
       stop("Environment creation failed. Check your conda installation")
     }else{
-      system(paste("conda install -y -n", env_name, "pyproj netCDF4 openpyxl"))
+      system(paste("conda install -y -n", env_name, "pyproj netCDF4 openpyxl matplotlib.pyplot"))
     }
 
     message("The env was successfully created")
