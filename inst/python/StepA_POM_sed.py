@@ -17,6 +17,7 @@ import sys
 
 filename = r.filename
 file_name_output = r.file_name_output
+# file_name_output = "regular_grid_POM_sed_status_quo_2011.nc"
 print(r.filename)
 print(r.file_name_output)
 
@@ -91,15 +92,15 @@ new_regular_PONsed = np.full((len(original_time), len(reg_lon), len(reg_lat)), n
 
 
 # Loop over each depth layer and interpolate the data onto the regular grid
-  for t in range(0, time_size):  # Loop over time steps
-        org_POC = ssm_solution.POCSD[t].values # Extract POC in sed 
-        org_PON = ssm_solution.PONSD[t].values # Extract PON in sed 
-        
-        #Krigging
-        new_regular_POCsed[t][:] = kriging_universal(
-            org_POC, original_lon, original_lat, my, mx)
-        new_regular_PONsed[t][:] = kriging_universal(
-            org_PON, original_lon, original_lat, my, mx)
+for t in range(0, time_size):  # Loop over time steps
+  org_POC = ssm_solution.POCSD[t].values # Extract POC in sed 
+  org_PON = ssm_solution.PONSD[t].values # Extract PON in sed 
+  
+  #Krigging
+  new_regular_POCsed[t][:] = kriging_universal(
+      org_POC, original_lon, original_lat, my, mx)
+  new_regular_PONsed[t][:] = kriging_universal(
+      org_PON, original_lon, original_lat, my, mx)
 
 print('Interpolation variables done!')
 

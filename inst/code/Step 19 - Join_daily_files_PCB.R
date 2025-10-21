@@ -1,5 +1,5 @@
 
-input_path <- here::here("Atlantis_daily_files",scenario,year,"PCB", congener)
+input_path <- here::here("Atlantis_daily_files",scenario,year,paste0("PCB", PCB_congener))
 output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameWC  <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB", PCB_congener, "_",scenario,"_",year,".nc")
 nc_filenamePON <- paste0(output_path, "/pugetsound_SSM_Atlantis_PCB", PCB_congener, "_PON_",scenario,"_",year,".nc")
@@ -45,8 +45,8 @@ t_dim <- ncdim_def("t","seconds since 2011-01-01", time, unlim = T)
 z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
 b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
 t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
-WC <- ncvar_def(paste0("PCB",pcb_n), "double", dim = list( z_dim,b_dim, t_dim),
-                units = "mg N m-3", missval = 0, longname = "PCB in the WC")
+WC <- ncvar_def(paste0("PCB",PCB_congener), "double", dim = list( z_dim,b_dim, t_dim),
+                units = "PCB/m^3", missval = 0, longname = "PCB in the WC")
 
 
 # Create a NetCDF file
@@ -60,8 +60,8 @@ ncvar_put(nc, t_var, time)
 ncvar_put(nc, WC, atlantis_input_WC, start = c(1,1,1),count = c( layer+1,box, length(time)))
 
 # Add minimum and maximum values to PCB_habitat variable attributes
-ncatt_put(nc, paste0("PCB",pcb_n), "valid_min", -50)
-ncatt_put(nc, paste0("PCB",pcb_n), "valid_max", 2000)
+ncatt_put(nc, paste0("PCB",PCB_congener), "valid_min", -50)
+ncatt_put(nc, paste0("PCB",PCB_congener), "valid_max", 2000)
 
 # Add dt attribute to t variable
 ncatt_put(nc, "t", "dt", 43200.0)
@@ -86,8 +86,8 @@ t_dim <- ncdim_def("t","seconds since 2011-01-01", time, unlim = T)
 z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
 b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
 t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
-PON <- ncvar_def(paste0("PCB",pcb_n, "_PON"), "double", dim = list( z_dim,b_dim, t_dim),
-                units = "mg N m-3", missval = 0, longname = "PCB in PON")
+PON <- ncvar_def(paste0("PCB",PCB_congener, "_PON"), "double", dim = list( z_dim,b_dim, t_dim),
+                units = "mgPCB/m^3", missval = 0, longname = "PCB in PON")
 
 
 # Create a NetCDF file
@@ -101,8 +101,8 @@ ncvar_put(nc, t_var, time)
 ncvar_put(nc, PON, atlantis_input_PON, start = c(1,1,1),count = c( layer+1,box, length(time)))
 
 # Add minimum and maximum values to PON variable attributes
-ncatt_put(nc, paste0("PCB",pcb_n,"_PON"), "valid_min", -50)
-ncatt_put(nc, paste0("PCB",pcb_n,"_PON"), "valid_max", 2000)
+ncatt_put(nc, paste0("PCB",PCB_congener,"_PON"), "valid_min", -50)
+ncatt_put(nc, paste0("PCB",PCB_congener,"_PON"), "valid_max", 2000)
 
 # Add dt attribute to t variable
 ncatt_put(nc, "t", "dt", 43200.0)
@@ -128,8 +128,8 @@ b_dim <- ncdim_def("b","boxNum", 0:(box-1))
 z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
 b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
 t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
-DON <- ncvar_def(paste0("PCB",pcb_n,"_DON"), "double", dim = list( z_dim,b_dim, t_dim),
-                units = "mg N m-3", missval = 0, longname = "PCB_DON")
+DON <- ncvar_def(paste0("PCB",PCB_congener,"_DON"), "double", dim = list( z_dim,b_dim, t_dim),
+                units = "mgPCB/m^3", missval = 0, longname = "PCB_DON")
 
 
 # Create a NetCDF file
@@ -143,8 +143,8 @@ ncvar_put(nc, t_var, time)
 ncvar_put(nc, DON, atlantis_input_DON, start = c(1,1,1),count = c( layer+1,box, length(time)))
 
 # Add minimum and maximum values to DON variable attributes
-ncatt_put(nc, paste0("PCB",pcb_n,"_DON"), "valid_min", -1)
-ncatt_put(nc, paste0("PCB",pcb_n,"_DON"), "valid_max", 2000)
+ncatt_put(nc, paste0("PCB",PCB_congener,"_DON"), "valid_min", -1)
+ncatt_put(nc, paste0("PCB",PCB_congener,"_DON"), "valid_max", 2000)
 
 # Add dt attribute to t variable
 ncatt_put(nc, "t", "dt", 43200.0)

@@ -21,7 +21,7 @@ file_name_output = r.file_name_output
 print(r.filename)
 print(r.file_name_output)
 
-
+print("1")
 # Step 1b: define kriging function
 # Create an RTree instance for spatial indexing using pyinterp
 mesh = pyinterp.RTree()
@@ -35,7 +35,7 @@ def kriging_universal(original_values, original_lon, original_lat, new_lat, new_
     return kriging.reshape(new_lon.shape)
 
 
-
+print("2")
 
 ###########
 # Step 2b: open netCDF file
@@ -45,6 +45,9 @@ print('NetCDF file read!')
 
 xssmvarb = ssm_solution.x.data 
 yssmvarb = ssm_solution.y.data 
+
+print("3")
+
 
 # Su Kyong's UTM to Lat/Lon conversion code
 transformer_xy_latlon = pyproj.Transformer.from_crs('epsg:26910', 'epsg:4326', always_xy=True)
@@ -62,6 +65,9 @@ min_lat = np.array(lat.min())
 max_lat = np.array(lat.max())
 min_lon = np.array(lon.min())
 max_lon = np.array(lon.max())
+
+print("4")
+
 
 STEP = 0.01
 reg_lat = np.arange(min_lat - STEP, max_lat + STEP, STEP)

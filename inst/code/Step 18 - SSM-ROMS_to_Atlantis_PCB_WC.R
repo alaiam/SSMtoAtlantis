@@ -1,10 +1,13 @@
 
 ###########################################################################
 # Path and names definition
-
+scenario = "status_quo"
+year = 2011
+PCB_congener = 118
+variable = "PCB118"
 input_path <- here::here("File_regular_grid", scenario, year)
-filename <- paste0("/regular_grid_PCB_",PCB_congener,"_",scenario , "_",year, ".nc")
-filename_sed <- paste0("/regular_grid_PCB_",PCB_congener,"_sed_",scenario , "_",year, ".nc")
+filename <- paste0("/regular_grid_PCB",PCB_congener,"_",scenario , "_",year, ".nc")
+filename_sed <- paste0("/regular_grid_PCB",PCB_congener,"sed_",scenario , "_",year, ".nc")
 output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 
 ###########################################################################
@@ -48,17 +51,6 @@ PCB_sed_dim <- roms_sed_vars %>% dplyr::filter(name==c("PCBsed")) %>% pluck('grd
 PCB_POCsed_dim <-roms_sed_vars %>% dplyr::filter(name==c("POC")) %>% pluck('grd')
 PCB_DOCsed_dim <-roms_sed_vars %>% dplyr::filter(name==c("DOC")) %>% pluck('grd')
 
-variable_before_Atlantis_sed2 <- roms_sed %>%
-  tidync::activate(PCB_sed_dim) %>%
-  tidync::hyper_tibble(force = TRUE) %>%
-  dplyr::select(PCBsed, POC, DOC, longitude, latitude,time)%>%
-  dplyr::rename(
-    PCB_sed=PCBsed,
-    PCB_sed_POC=POC,
-    PCB_sed_DOC=DOC,
-    longitude = longitude,
-    latitude = latitude,
-    time = time)
 gc()
 variable_before_Atlantis2 <- roms %>%
   tidync::activate(PCB_WC_dim) %>%
@@ -71,13 +63,22 @@ variable_before_Atlantis2 <- roms %>%
     longitude = longitude,
     latitude = latitude,
     roms_layer = sigma_layer, time = time)
-
-
-
 gc() #free unused memory before parallelization
+variable_before_Atlantis_sed2 <- roms_sed %>%
+  tidync::activate(PCB_sed_dim) %>%
+  tidync::hyper_tibble(force = TRUE) %>%
+  dplyr::select(PCBsed, POC, DOC, longitude, latitude,time)%>%
+  dplyr::rename(
+    PCB_sed=PCBsed,
+    PCB_sed_POC=POC,
+    PCB_sed_DOC=DOC,
+    longitude = longitude,
+    latitude = latitude,
+    time = time)
+gc()
 cores=detectCores()
 cl <- cores -1 #not to overload your computer
-cl <- 4 #not to overload your computer
+cl <- 3 #not to overload your computer
 registerDoParallel(cl)
 
 foreach(days = step_file) %dopar%{
@@ -92,7 +93,10 @@ foreach(days = step_file) %dopar%{
 
 
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
-  variables_sed <- merge(box_composition, variable_before_Atlantis_sed, by = c("latitude", "longitude"))
+  variables_sed <- merge(box_composition, variable_before_Atlantis_sed, by = c("latitude", "longitude")) %>%
+    dplyr::distinct(latitude, longitude, .bx0, PCB_sed, PCB_sed_POC, PCB_sed_DOC, time)
+
+
   ###################################################################
   time = as.numeric(sort(unique(variables_polygons$time)))
   box = 89
@@ -125,7 +129,7 @@ foreach(days = step_file) %dopar%{
         }
       }
       subset <-variables_sed %>%
-        filter(.bx0 == i, atlantis_layer == j)
+        filter(.bx0 == i)
 
       sed_value <- (mean(subset$PCB_sed, na.rm = T)*1000)[[1]] #g to mg
       keep <- all.layers_PCB_WC[is.na(all.layers_PCB_WC)]

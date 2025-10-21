@@ -15,7 +15,7 @@ if(!dir.exists(input_path)){
   stop("The daily files were not created.")
 }
 
-nc_filename <- paste0(output_path,"/pugetsound_SSM_Atlantis_uvw_",scenario,year,".nc")
+nc_filename <- paste0(output_path,"/pugetsound_SSM_Atlantis_uvw_",scenario,"_",year,".nc")
 
 ###########################################################################
 # matrix dest_k, dest_b,

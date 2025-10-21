@@ -9,7 +9,7 @@ if(!dir.exists(input_path)){
 }
 output_path <- here::here("Atlantis_inputs",scenario,year)
 nc_filenameSP <- paste0(output_path, "/pugetsound_SSM_Atlantis_SP_",scenario,"_",year,".nc")
-nc_filename <- paste0(output_path, "/pugetsound_SSM_Atlantis_LP_",scenario,"_",year,".nc")
+nc_filenameLP <- paste0(output_path, "/pugetsound_SSM_Atlantis_LP_",scenario,"_",year,".nc")
 list.file <- sort(list.files(input_path))
 
 time = seq(0,730*12*60*60-1, 12*60*60)
@@ -49,7 +49,7 @@ B1 <- ncvar_def("Lrg_Phyto_N", "double", dim = list( z_dim,b_dim, t_dim),
 
 
 # Create a NetCDF file
-nc <- nc_create(nc_filenameLZ, vars = list(B1 = B1))
+nc <- nc_create(nc_filenameLP, vars = list(B1 = B1))
 
 # Put dimensions and variables in the NetCDF file
 
@@ -91,7 +91,7 @@ B2 <- ncvar_def("Sm_Phyto_N", "double", dim = list( z_dim,b_dim, t_dim),
 
 
 # Create a NetCDF file
-nc <- nc_create(nc_filenameSZ, vars = list(B2 = B2))
+nc <- nc_create(nc_filenameSP, vars = list(B2 = B2))
 
 # Put dimensions and variables in the NetCDF file
 

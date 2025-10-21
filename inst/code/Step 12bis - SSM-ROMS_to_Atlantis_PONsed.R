@@ -67,7 +67,7 @@ foreach(days = step_file) %dopar%{
   ###################################################################
   time = as.numeric(sort(unique(variables_polygons$time)))
   box = 89
-  atlantis_input_PON <- array(rep(NA,box*(layer+1)*length(time)), dim = c(box,length(time)))
+  atlantis_input_PON <- array(rep(NA,box*length(time)), dim = c(box,length(time)))
 
   for (i in 0:(box-1)){
     for (t in 1:length(time)){

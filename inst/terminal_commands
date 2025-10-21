@@ -11,3 +11,4 @@ conda create -n Salish_sea_env --file SSMtoAtlantis/inst/Salish_sea_env_explicit
 
 conda activate Salish_sea_env
 conda install pyproj netCDF4 openpyxl
+conda install -c conda-forge matplotlib=3.5
