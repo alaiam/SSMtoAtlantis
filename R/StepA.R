@@ -17,7 +17,7 @@
 #' StepA(year, variable, scenario, filename)
 StepA <- function(year, variable, scenario, filename) {
   list.var <- c("salinity","temperature", "U", "V", "W", "NO3", "NH4",
-                "SZ", "LZ", "MZ", "SP", "LP", "O2", "LPON", "RPON", "RDON")
+                "SZ", "LZ", "MZ", "SP", "LP", "O2", "LPON", "RPON", "RDON", "POM_sed")
   if (!variable %in% list.var) {
     stop("The variable is not in SSM, please try: ",
          paste(list.var, collapse = ", "))
@@ -35,6 +35,7 @@ StepA <- function(year, variable, scenario, filename) {
     B = c("SP", "LP"),
     O2 = "O2",
     PON = c("LPON", "RPON"),
+    POM_sed = c("POM_sed"),
     DON = "RDON"
   )
 
