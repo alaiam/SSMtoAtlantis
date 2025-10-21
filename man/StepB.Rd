@@ -10,7 +10,7 @@ StepB(year, variable, scenario, PCB_congener = "0")
 \item{year}{The year of the SSM outputs (numeric or string).}
 
 \item{variable}{The variable name to extract. Choice are:
-salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, O2, LPON, RPON, RDON, PCB}
+salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, O2, LPON, RPON, RDON, POM_sed, PCB}
 
 \item{scenario}{The name of the scenario used to produced SSM output}
 
