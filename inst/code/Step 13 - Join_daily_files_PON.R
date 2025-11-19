@@ -7,8 +7,8 @@ if(!dir.exists(input_path)){
   stop("The daily files were not created.")
 }
 output_path <- here::here("Atlantis_inputs",scenario,year)
-nc_filenameLPON <- paste0(output_path, "/pugetsound_SSM_Atlantis_RPON_",scenario,"_",year,".nc")
-nc_filenameRPON <- paste0(output_path, "/pugetsound_SSM_Atlantis_LPON_",scenario,"_",year,".nc")
+nc_filenameLPON <- paste0(output_path, "/pugetsound_SSM_Atlantis_LPON_",scenario,"_",year,".nc")
+nc_filenameRPON <- paste0(output_path, "/pugetsound_SSM_Atlantis_RPON_",scenario,"_",year,".nc")
 
 
 list.file <- sort(list.files(input_path))

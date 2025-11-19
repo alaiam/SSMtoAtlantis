@@ -38,8 +38,8 @@ t_dim <- ncdim_def("t","seconds since 2011-01-01", time, unlim = T)
 z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
 b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
 t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
-PCBB1 <- ncvar_def(paste0("PCB",pcb_n,"_Lrg_Phyto_N"), "double", dim = list( z_dim,b_dim, t_dim),
-                         units = "mg.m-3", missval = 0, longname = paste0("PCB",pcb_n," in Large phytoplankton (diatoms)"))
+PCBB1 <- ncvar_def(paste0("Lrg_Phyto_PCB",pcb_n), "double", dim = list( z_dim,b_dim, t_dim),
+                         units = "mgPCB/m^3", missval = 0, longname = paste0("PCB",pcb_n," in Large phytoplankton (diatoms)"))
 
 
 # Create a NetCDF file
@@ -80,8 +80,8 @@ b_dim <- ncdim_def("b","boxNum", 0:(box-1))
 z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
 b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
 t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
-PCBB2 <- ncvar_def(paste0("PCB",pcb_n,"_Sm_Phyto_N"), "double", dim = list( z_dim,b_dim, t_dim),
-                      units = "mg.m-3", missval = 0, longname = paste0("PCB",pcb_n," in Small phytoplankton (dinoflagellates)"))
+PCBB2 <- ncvar_def(paste0("Sm_Phyto_PCB",pcb_n), "double", dim = list( z_dim,b_dim, t_dim),
+                      units = "mgPCB/m^3", missval = 0, longname = paste0("PCB",pcb_n," in Small phytoplankton (dinoflagellates)"))
 
 
 # Create a NetCDF file

@@ -26,7 +26,7 @@ print(r.file_name_output)
 # filename = "//nfsdata/SSM_contaminants/pcb138_yr2011_sd_wqm_time_avg_crop.nc"
 # filename = "//nfsdata/SSM_contaminants/pcb153_yr2011_sd_wqm_time_avg_crop.nc"
 print(filename)
-file_name_output = "testPCB_sed118.nc"
+# file_name_output = "testPCB_sed118.nc"
 print(file_name_output)
 # Step 1b: define kriging function
 

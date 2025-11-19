@@ -17,6 +17,7 @@ import sys
 
 filename = r.filename
 file_name_output = r.file_name_output
+# file_name_output = "/home/atlantis/regular_grid_PCB118_status_quo_2011.nc"
 print(r.filename)
 print(r.file_name_output)
 
