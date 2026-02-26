@@ -7,32 +7,56 @@ Date: 15/08/2025
 # From SSM grid (FVCOM like) to regular grid (ROMS like)
 ## Load the environment 
 ```{r}
+# devtools::install_github("alaiam/SSMtoAtlantis")
 library(reticulate)
-use_condaenv("Salish_sea_env") 
+library(tidyverse)
+library(tidync)
+library(doParallel)
+library(SSMtoAtlantis)
+library(ncdf4)
+# setup_python_env(env_name = "Salish_sea_env",
+#    conda_path = "/home/atlantis/anaconda3/bin")
+use_condaenv("Salish_sea_env")
 year = 2011
-scenario = "status_quo"
-filename_hyd = "/home/atlantis/2025_08_08/2025_08_08/velmaT_minus3.35_yr2011_hyd_time_avg_crop.nc"
-filename_wqm = "/home/atlantis/2025_08_08/2025_08_08/velmaT_minus3.35_yr2011_wqm_time_avg_crop.nc"
+scenario = "cc_nutrient_paper"
+filename_hyd = "/nfsdata/NandCCpaper_Dec2025/N_T_control/yr2011_hyd_time_avg_crop.nc"
+filename_wqm = "/nfsdata/NandCCpaper_Dec2025/N_T_control/yr2011 _wqm_time_avg_crop.nc"
+select <- dplyr::select #TODO: fix step B for current --> the function does not run without this row
+
 
 ```
+
+
+
+```{r}
+SSMtoAtlantis::preprocess()
+?preprocess
+?face_horizontal_equivalence
+?setup_python_env
+?StepA
+?StepB
+?join_dailyfiles
+
+
+```
+
 
 ## Physical variables
 ```{r}
 
-filename = filename_hyd
-SSMtoAtlantis::StepA(year, "temperature", scenario, filename = filename)
+filename = filename_hyd # mandatory step for now
+SSMtoAtlantis::StepA(year, "temperatureee", scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "U" ,          scenario, filename = filename)
-c( "U", "V", "W")
-
 
 ```
 ## Water quality variables
 
 ```{r}
-filename = filename_wqm
+filename = filename_wqm # mandatory step for now
 SSMtoAtlantis::StepA(year, "SP",     scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "SZ",     scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "LPON",   scenario, filename = filename)
+SSMtoAtlantis::StepA(year, "POM_sed",   scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "RDON",   scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "NO3",    scenario, filename = filename)
 SSMtoAtlantis::StepA(year, "O2", scenario, filename = filename)
@@ -41,14 +65,15 @@ SSMtoAtlantis::StepA(year, "O2", scenario, filename = filename)
 # From regular grid to Atlantis grid (irregular polygons) daily files
 
 ## Physical variables
+# Step B crashes without 32 Go for the RAM
 
 ```{r}
-SSMtoAtlantis::StepB(year, "temperature", scenario)
-SSMtoAtlantis::StepB(year, "U", scenario)
+SSMtoAtlantis::StepB(year, "U", scenario) # Very heavy for your computer: be careful before to run
+SSMtoAtlantis::StepB(year, "temperatureee", scenario)
 ```
 
 ## Water quality variables
-
+# Step B crashes without 32 Go for the RAM
 ```{r}
 SSMtoAtlantis::StepB(year, "SP", scenario)
 SSMtoAtlantis::StepB(year, "SZ", scenario)
@@ -59,5 +84,58 @@ SSMtoAtlantis::StepB(year, "O2", scenario)
 ```
 
 # From Atlantis grid (irregular polygons) daily files to yearly files
+
+```{r}
+SSMtoAtlantis::join_dailyfiles(year, "temperature", scenario)
+SSMtoAtlantis::join_dailyfiles(year, "U", scenario)
+SSMtoAtlantis::join_dailyfiles(year, "SP", scenario)
+SSMtoAtlantis::join_dailyfiles(year, "SZ", scenario)
+SSMtoAtlantis::join_dailyfiles(year, "LPON", scenario)
+SSMtoAtlantis::join_dailyfiles(year, "RDON", scenario)
+SSMtoAtlantis::join_dailyfiles(year, "NO3", scenario)
+SSMtoAtlantis::join_dailyfiles(year, "O2", scenario)
+```
+
+
+# Example of how to create an Atlantis input for a time serie
+```{r}
+
+# Officially from 1981 to 2011, using looped 2011 for the entire period (burn-in period)
+initialization.period = SSMtoAtlantis::linear_interpolation(year_start = 1981, year_end = 2011, 
+                                              year_name_decade_start = 2011, 
+                                              year_name_decade_end =2011, 
+                                              variable = "temperature", scenario = "status_quo")
+
+# From 2011 to 2025, using year 2011 and decade 2020s
+Y2010s <- SSMtoAtlantis::linear_interpolation(year_start = 2011, year_end = 2025, 
+                                              year_name_decade_start = 2011, 
+                                              year_name_decade_end =2020, 
+                                              variable = "temperature", scenario = "status_quo")
+
+# From 2011 to 2025, using year 2011 and decade 2020s
+Y2020s <- SSMtoAtlantis::linear_interpolation(year_start = 2025, year_end = 2035, 
+                                              year_name_decade_start = 2020, 
+                                              year_name_decade_end =2030, 
+                                              variable = "temperature", scenario = "status_quo")
+
+# From 2011 to 2025, using year 2011 and decade 2020s
+Y2030s <- SSMtoAtlantis::linear_interpolation(year_start = 2035, year_end = 2045,
+                                              year_name_decade_start = 2030, 
+                                              year_name_decade_end =2040,  
+                                              variable = "temperature", scenario = "status_quo")
+
+# Combining the full time serie
+full.time.serie <- abind::abind(initialization.period, Y2010s, Y2020s, Y2030s, along = 3)
+
+# Plot
+plot(x = (1:46720)/730+1981, y = apply(X = full.time.serie[1,2:10,], FUN = mean, MARGIN = 2), 
+     xlab = "Year", ylab = "Temperature")
+
+# Write the nc.files
+write_interpoled_array(full.time.serie, start_year = 1981, end_year = 2045, scenario = "status_quo", 
+                                      variable = "temperature")
+
+```
+
 
 

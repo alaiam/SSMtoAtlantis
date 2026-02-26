@@ -1,0 +1,67 @@
+---
+title: "Interannual AMPS forcing files"
+output: html_document
+date: "2025-12-03"
+---
+
+```{r}
+library(SSMtoAtlantis)
+library(ncdf4)
+library(abind)
+var <- c("salinity", "temperature",
+                       # "uvw",
+                      "NO3", "NH4",
+                      "SZ", "LZ", "MZ", "SP", "LP",
+                      "oxygen", "LPON", "RPON", "RDON")
+
+```
+
+# Interpolation 
+```{r}
+
+for (i in var){
+  
+# Officially from 1981 to 2011, using looped 2011 for the entire period
+initialization.period = SSMtoAtlantis::linear_interpolation(year_start = 1981, year_end = 2011, 
+                                              year_name_decade_start = 2011, 
+                                              year_name_decade_end =2011, 
+                                              variable = i, scenario = "status_quo")
+
+# From 2011 to 2025, using year 2011 and decade 2020s
+Y2010s <- SSMtoAtlantis::linear_interpolation(year_start = 2011, year_end = 2025, 
+                                              year_name_decade_start = 2011, 
+                                              year_name_decade_end =2020, 
+                                              variable = i, scenario = "status_quo")
+
+# From 2011 to 2025, using year 2011 and decade 2020s
+Y2020s <- SSMtoAtlantis::linear_interpolation(year_start = 2025, year_end = 2035, 
+                                              year_name_decade_start = 2020, 
+                                              year_name_decade_end =2030, 
+                                              variable = i, scenario = "status_quo")
+
+# From 2011 to 2025, using year 2011 and decade 2020s
+Y2030s <- SSMtoAtlantis::linear_interpolation(year_start = 2035, year_end = 2045,
+                                              year_name_decade_start = 2030, 
+                                              year_name_decade_end =2040,  
+                                              variable = i, scenario = "status_quo")
+
+# Combining the full time serie
+if (i == "uvw"){
+  full.time.serie <- list()
+  full.time.serie$exchange <- abind::abind(initialization.period$exchange, 
+                                           Y2010s$exchange, Y2020s$exchange, Y2030s$exchange, along = 4)
+  full.time.serie$dest_b <- abind::abind(initialization.period$dest_b, 
+                                           Y2010s$dest_b, Y2020s$dest_b, Y2030s$dest_b, along = 4)
+  full.time.serie$dest_k <- abind::abind(initialization.period$dest_k, 
+                                           Y2010s$dest_k, Y2020s$dest_k, Y2030s$dest_k, along = 4)
+}else{
+  full.time.serie <- abind::abind(initialization.period, Y2010s, Y2020s, Y2030s, along = 3)
+}
+
+# Write the nc.files
+write_interpoled_data(data = full.time.serie, start_year = 1981, end_year = 2045, scenario = "status_quo", 
+                                      variable = i)
+
+}
+
+```
