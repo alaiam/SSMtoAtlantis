@@ -37,8 +37,7 @@ StepB <- function(year, variable, scenario, PCB_congener = "0"){
   if (!dir.exists(path)) dir.create(path, recursive = TRUE)
 
   if(!variable%in%list.var) stop("The variable is not in SSM, please try:
-salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, O2, LPON, RPON, RDON, POM_sed, PCB.
-For a pdf sum up, try all")
+salinity, temperature, U, V, W, NO3, NH4, SZ, LZ, MZ, SP, LP, O2, LPON, RPON, RDON, POM_sed, PCB")
 
   if(variable== "PCB" & PCB_congener == "0") stop("PCB_congener needs to be between 118, 138 or 153")
 

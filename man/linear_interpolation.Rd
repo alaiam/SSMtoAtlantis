@@ -4,7 +4,14 @@
 \alias{linear_interpolation}
 \title{linear_interpolation}
 \usage{
-linear_interpolation(year_start, year_end, scenario, variable)
+linear_interpolation(
+  year_start,
+  year_end,
+  scenario,
+  variable,
+  year_name_decade_start = "",
+  year_name_decade_end = ""
+)
 }
 \arguments{
 \item{year_start}{numeric Start year}
@@ -14,16 +21,24 @@ linear_interpolation(year_start, year_end, scenario, variable)
 \item{scenario}{character Scenario name}
 
 \item{variable}{character Variable name}
+
+\item{year_name_decade_start}{character Start year name in Atlantis input. year_start and year_name_decade_start may differ when the second refer to a decade, the first is on average the mid-year of the decade.}
+
+\item{year_name_decade_end}{Character End year name in Atlantis input. year_end and year_name_decade_end may differ when the second refer to a decade, the first is on average the mid-year of the decade.}
 }
 \value{
 Array of interpolated values
 }
 \description{
-linear_interpolation
+It returns an array with the variable interpolated between the year_start and the year_end.
+Year end in not included in the returned array. The returned array is of dimension
+[1:layer, 1:polygon, (1:730)*(year_end-year_start)].
 }
 \examples{
 year_start = 2015
 year_end = 2025
+year_name_decade_start = 2010
+year_name_decade_end = 2020
 scenario = "status_quo"
 variable = "temperature"
 linear_interpolation(year_start, year_end, scenario, variable)
