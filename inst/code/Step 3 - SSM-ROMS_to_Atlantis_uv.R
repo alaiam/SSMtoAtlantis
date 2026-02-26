@@ -15,9 +15,9 @@ atlantis_sf <- atlantis_bgm %>% rbgm::box_sf()
 ###########################################################################
 
 
-full_face_composition <- read.csv(system.file("code/face_composition_uv.csv", package = "SSMtoAtlantis"))
+full_face_composition <- utils::read.csv(system.file("code/face_composition_uv.csv", package = "SSMtoAtlantis"))
 names(full_face_composition)[c(9,10,11)] <- c("Polygon #","Face #", "adjacent box")
-uxy2 <- read.csv(system.file("code/uxy2_uv_code.csv", package = "SSMtoAtlantis"))
+uxy2 <- utils::read.csv(system.file("code/uxy2_uv_code.csv", package = "SSMtoAtlantis"))
 
 list <- list()
 for (i in 1:length(full_face_composition$uvec)){
@@ -60,7 +60,7 @@ roms_vars_v <- tidync::hyper_grids(roms_v) %>% # all available grids in the ROMS
 
 ####################################################################################
 
-u_dim <- roms_vars_u %>% dplyr::filter(name==c("u")) %>% pluck('grd')
+u_dim <- roms_vars_u %>% dplyr::filter(name==c("u")) %>% purrr::pluck('grd')
 u_values <- roms_u %>%
   tidync::activate(u_dim) %>%
   tidync::hyper_tibble(force = TRUE) %>%
@@ -70,8 +70,7 @@ u_values <- roms_u %>%
     longitude = longitude,
     latitude = latitude,
     roms_layer = sigma_layer,
-     time = time)#%>%
-  # filter(time >=360)
+     time = time)
 gc()
 v_values <- u_values  %>%
   dplyr::select(v, longitude, latitude, roms_layer, time)
@@ -85,15 +84,9 @@ out <- (1:730)[!1:730 %in% files]
 pdt <- out
 
 gc()
-# cores=detectCores()
-# cl <- cores -1 #not to overload your computer
-# cl <- 3 #not to overload your computer
-# registerDoParallel(cl)
-gc()
-gc()
-mclapply(pdt, function(days) {
-                   sub_u_values <- u_values %>% filter(time == days)
-                   sub_v_values <- v_values %>% filter(time == days)
+parallel::mclapply(pdt, function(days) {
+                   sub_u_values <- u_values %>% dplyr::filter(time == days)
+                   sub_v_values <- v_values %>% dplyr::filter(time == days)
 
                    uv_values2<-  merge(sub_u_values,sub_v_values , by = c("longitude", "latitude", "roms_layer"))
                    uv_values2<-  merge(uv_values2,uxy2 , by = c("latitude", "longitude"))
@@ -109,25 +102,25 @@ mclapply(pdt, function(days) {
                    }
 
                    face_vector <- full_face_composition %>%
-                     group_by(minz,FaceID) %>%
-                     mutate(new.u =mean(u, na.rm =T)) %>%
-                     mutate(new.v =mean(v, na.rm =T)) %>%
+                     dplyr::group_by(minz,FaceID) %>%
+                     dplyr::mutate(new.u =mean(u, na.rm =T)) %>%
+                     dplyr::mutate(new.v =mean(v, na.rm =T)) %>%
                      dplyr::select("FaceID",  "cosine" , "sine" ,"atlantis_layer", "face_area" , "maxz" , "minz", "Polygon #", "Face #", "adjacent box" ,"lat","lon","new.u","new.v") %>%
-                     distinct() %>%
-                     ungroup()
+                     dplyr::distinct() %>%
+                     dplyr::ungroup()
 
                    face_adj_box <- face_vector %>% dplyr::select("FaceID", "adjacent box", "Polygon #")  %>%
-                     group_by(FaceID, pair_key = pmin(`Polygon #`, `adjacent box`) + pmax(`Polygon #`, `adjacent box`) * 1000) %>%
-                     slice(1) %>%
-                     ungroup() %>%
+                     dplyr::group_by(FaceID, pair_key = pmin(`Polygon #`, `adjacent box`) + pmax(`Polygon #`, `adjacent box`) * 1000) %>%
+                     dplyr::slice(1) %>%
+                     dplyr::ungroup() %>%
                      dplyr::select(-pair_key)
 
                    face_vector <- face_vector %>%
                      dplyr::select("FaceID",  "cosine" , "sine" ,"atlantis_layer", "face_area" , "maxz" , "minz","lat","lon","new.u","new.v") %>%
-                     distinct() %>%
-                     ungroup()
+                     dplyr::distinct() %>%
+                     dplyr::ungroup()
 
-                   face_vector <- face_vector %>% left_join(face_adj_box,by=c('FaceID'))
+                   face_vector <- face_vector %>% dplyr::left_join(face_adj_box,by=c('FaceID'))
 
                    # flux résultant somme u + v est nommé z: z = (u² + v²)^1/2
                    face_vector$z = (face_vector$new.u^2 + face_vector$new.v^2)^(1/2)
@@ -139,13 +132,13 @@ mclapply(pdt, function(days) {
                    ################ Calculate the speed perdilar to the face --> send in y
                    Polygons_to_dest <- face_vector %>%
                      dplyr::select("FaceID","atlantis_layer","cosine","face_area", "maxz" , "minz", "Polygon #", "adjacent box" ,"new.u","new.v") %>%
-                     mutate(z = (new.u^2 + new.v^2)^(1/2)) %>%
-                     mutate(alpha = (atan2(new.v, new.u)*180/pi)) %>%
-                     mutate(beta = acos(cosine)*180/pi) %>%
+                     dplyr::mutate(z = (new.u^2 + new.v^2)^(1/2)) %>%
+                     dplyr::mutate(alpha = (atan2(new.v, new.u)*180/pi)) %>%
+                     dplyr::mutate(beta = acos(cosine)*180/pi) %>%
                      # alpha second: angle between face and vector z
-                     mutate(alpha.second = 180 - (beta - alpha) ) %>% #TODO: check that this line converse the good direction through the face
+                     dplyr::mutate(alpha.second = 180 - (beta - alpha) ) %>% #TODO: check that this line converse the good direction through the face
                      # y: speed perpendicular to the facce
-                     mutate(y = sin(alpha.second)*z)
+                     dplyr::mutate(y = sin(alpha.second)*z)
                    rm(face_vector)
 
                    # From flux in m.s-1 -->  *area *60*60*12
@@ -153,35 +146,35 @@ mclapply(pdt, function(days) {
 
                    # Sum of the flux with the same polygons in origin and desti
                    Flux_between_polygon <- Polygons_to_dest %>%
-                     group_by(minz,`Polygon #`, `adjacent box`) %>%
-                     mutate(water.transfert =sum(water_flux, na.rm =T)) %>%
+                     dplyr::group_by(minz,`Polygon #`, `adjacent box`) %>%
+                     dplyr::mutate(water.transfert =sum(water_flux, na.rm =T)) %>%
                      dplyr::select("atlantis_layer", "maxz" , "minz", "Polygon #", "adjacent box" ,"water.transfert") %>%
-                     mutate(time = days) %>%
-                     distinct() %>%
-                     ungroup()
+                     dplyr::mutate(time = days) %>%
+                     dplyr::distinct() %>%
+                     dplyr::ungroup()
                    rm(Polygons_to_dest)
 
                    ###########################################################################
                    # Hyperdiffusion correction:
 
-                   hyperdiffusion_correction_area <- atlantis_sf %>% ungroup %>% dplyr::select(area,box_id )
+                   hyperdiffusion_correction_area <- atlantis_sf %>% dplyr::ungroup() %>% dplyr::select(area,box_id )
                    hyperdiffusion_correction_area <- as.data.frame(hyperdiffusion_correction_area)[,c(1,2)]
                    names(hyperdiffusion_correction_area)[2] <- "destination"
 
                    Corr.Flux_between_polygon <- Flux_between_polygon %>%
-                     mutate(destination = ifelse( water.transfert>0, `adjacent box`, `Polygon #`)) %>%
-                     left_join(hyperdiffusion_correction_area, by = c("destination")) %>%
-                     mutate(Corr.water.transfert = water.transfert/((area)))%>%   #Method correct hyperdiffusion
-                     mutate(atlantis_layer = atlantis_layer-1) %>%
-                     mutate(Layer_dest = atlantis_layer) %>%
+                     dplyr::mutate(destination = ifelse( water.transfert>0, `adjacent box`, `Polygon #`)) %>%
+                     dplyr::left_join(hyperdiffusion_correction_area, by = c("destination")) %>%
+                     dplyr::mutate(Corr.water.transfert = water.transfert/((area)))%>%   #Method correct hyperdiffusion
+                     dplyr::mutate(atlantis_layer = atlantis_layer-1) %>%
+                     dplyr::mutate(Layer_dest = atlantis_layer) %>%
                      dplyr::select(atlantis_layer, `Polygon #`,`adjacent box`, Corr.water.transfert, Layer_dest, time)
                    rm(Flux_between_polygon)
                    csv_filename <- paste0(output_path, "/uv_", days,".csv")
-                   write.csv(Corr.Flux_between_polygon, csv_filename, row.names = F)
+                   utils::write.csv(Corr.Flux_between_polygon, csv_filename, row.names = F)
                    rm(Corr.Flux_between_polygon)
                    gc()
                  }, mc.cores = 2)
-registerDoSEQ()
+foreach::registerDoSEQ()
 gc()
 
 

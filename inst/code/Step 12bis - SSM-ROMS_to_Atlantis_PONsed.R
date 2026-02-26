@@ -9,14 +9,14 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 ###########################################################################
 # Read data ROMS data
 roms <- tidync::tidync(paste0(input_path,filename))
-box_composition <- read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
+box_composition <- utils::read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
 box_composition <- box_composition[box_composition$roms_layer==1,c(1,11,12)]
 
 ###########################################################################
 
 # get list of ROMS variables
 roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncdf
-  pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
+  purrr::pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
     roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
@@ -32,7 +32,7 @@ files <- sort(as.numeric(sub(".nc", "", files)))
 out <- (1:730)[!1:730 %in% files]
 step_file <- out
 
-PON_dim <- roms_vars %>% dplyr::filter(name==c("PON")) %>% pluck('grd')
+PON_dim <- roms_vars %>% dplyr::filter(name==c("PON")) %>% purrr::pluck('grd')
 
 
 variable_before_Atlantis2 <- roms %>%
@@ -47,21 +47,14 @@ variable_before_Atlantis2 <- roms %>%
 
 
 gc() #free unused memory before parallelization
-cores=detectCores()
-cl <- cores -1 #not to overload your computer
-cl <- 4 #not to overload your computer
-registerDoParallel(cl)
+cl <- parallel::makeCluster(4)
+doParallel::registerDoParallel(cl)
 
-foreach(days = step_file) %dopar%{
-  # for (days in 1:length(step_file)){
+foreach::foreach(days = step_file,
+                 .packages = c("dplyr","tidync","ncdf4")) %dopar%{
 
 
-
-
-  variable_before_Atlantis<- variable_before_Atlantis2 %>% filter(time== days)
-
-
-
+  variable_before_Atlantis<- variable_before_Atlantis2 %>% dplyr::filter(time== days)
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude"))
 
   ###################################################################
@@ -79,45 +72,45 @@ foreach(days = step_file) %dopar%{
     }
   }
 
-
   ###################################################################################
   # Define nc file
   ###################################################################################
   # Define dimensions
-  b_dim <- ncdim_def("b","boxNum", 0:(box-1))
-  t_dim <- ncdim_def("t","seconds since 2011-01-01", (time-1)*60*60)
+  b_dim <- ncdf4::ncdim_def("b","boxNum", 0:(box-1))
+  t_dim <- ncdf4::ncdim_def("t","seconds since 2011-01-01", (time-1)*60*60)
   # Define variables
-  b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
-  t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
-  PON <- ncvar_def("PON", "double", dim = list(b_dim, t_dim),
+  b_var <- ncdf4::ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
+  t_var <- ncdf4::ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
+  PON <- ncdf4::ncvar_def("PON", "double", dim = list(b_dim, t_dim),
                    units = "mg.m-3", missval = NA, longname = "LPON")
   output_filename = paste0("/PON_sed_Atlantis_", days, ".nc")
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
-  nc <- nc_create(nc_filename, vars = list(PON = PON))
+  nc <- ncdf4::nc_create(nc_filename, vars = list(PON = PON))
 
   # Put dimensions and variables in the NetCDF file
 
-  ncvar_put(nc, b_var, 0:(box-1))
-  ncvar_put(nc, t_var, (time-1)*60*60)
-  ncvar_put(nc, PON, atlantis_input_PON, start = c(1,1),count = c(box, length(time)))
+  ncdf4::ncvar_put(nc, b_var, 0:(box-1))
+  ncdf4::ncvar_put(nc, t_var, (time-1)*60*60)
+  ncdf4::ncvar_put(nc, PON, atlantis_input_PON, start = c(1,1),count = c(box, length(time)))
 
   # Add minimum and maximum values to LPON variable attributes
-  ncatt_put(nc, "PON", "valid_min", 0)
-  ncatt_put(nc, "PON", "valid_max", 2000000)
+  ncdf4::ncatt_put(nc, "PON", "valid_min", 0)
+  ncdf4::ncatt_put(nc, "PON", "valid_max", 2000000)
 
   # Add dt attribute to t variable
-  ncatt_put(nc, "t", "dt", 43200.0)
+  ncdf4::ncatt_put(nc, "t", "dt", 43200.0)
 
   # Global attributes
-  ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
-  ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
-  ncatt_put(nc, 0, "parameters", "")
+  ncdf4::ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
+  ncdf4::ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
+  ncdf4::ncatt_put(nc, 0, "parameters", "")
 
   # Close the NetCDF file
-  nc_close(nc)
+  ncdf4::nc_close(nc)
 
 }
-registerDoSEQ()
+parallel::stopCluster(cl)
+foreach::registerDoSEQ()
 gc()
 

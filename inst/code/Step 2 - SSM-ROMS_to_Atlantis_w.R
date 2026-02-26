@@ -16,7 +16,7 @@ box_composition <- read.csv(system.file("code/box_composition_ww.csv", package =
 layer_max <- read.csv(system.file("code/layer_max_ww.csv", package = "SSMtoAtlantis"))
 # get list of ROMS variables
 roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncdf
-  pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
+  purrr::pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
     roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
@@ -26,10 +26,10 @@ roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncd
 
 names(layer_max)[1] <- "Polygon #"
 layer_depth <-box_composition %>%
-  select("atlantis_layer", "dz.x")%>%
-  mutate(Layer = atlantis_layer-1, Layer_dest = atlantis_layer-1)%>%
-  distinct()%>%
-  select("dz.x", Layer, Layer_dest)
+  dplyr::select("atlantis_layer", "dz.x")%>%
+  dplyr::mutate(Layer = atlantis_layer-1, Layer_dest = atlantis_layer-1)%>%
+  dplyr::distinct()%>%
+  dplyr::select("dz.x", Layer, Layer_dest)
 
 ############################################################################################
 ############################################################################################
@@ -41,12 +41,12 @@ files <- sort(as.numeric(sub(".csv", "", files)))
 out <- (1:730)[!1:730 %in% files]
 step_file <- out
 
-ww_dim <- roms_vars %>% dplyr::filter(name==c("ww")) %>% pluck('grd')
+ww_dim <- roms_vars %>% dplyr::filter(name==c("ww")) %>% purrr::pluck('grd')
 
 gc()  # free unsused memory
 cores_possible_memory <- as.numeric(system("awk '/MemAvailable/ {print $2}' /proc/meminfo", intern = TRUE)) / 1024 /1000/8
-cl=ceiling(min(detectCores()-1, cores_possible_memory))
-registerDoParallel(cl)
+cl=ceiling(min(parallel::detectCores()-1, cores_possible_memory))
+doParallel::registerDoParallel(cl)
 
 variable_before_Atlantis <- roms %>%
   tidync::activate(ww_dim) %>%
@@ -58,9 +58,10 @@ variable_before_Atlantis <- roms %>%
     latitude = latitude,
     roms_layer = sigma_layer, time = time)
 gc()
-foreach(days = step_file) %dopar%{
+foreach::foreach(days = step_file,
+                 .packages = c("dplyr", "tidync", "purrr", "reshape2")) %dopar%{
 
-  variable_before_Atlantis2<- variable_before_Atlantis %>% filter(time==days)
+  variable_before_Atlantis2<- variable_before_Atlantis %>% dplyr::filter(time==days)
   merge_test <- merge(box_composition, variable_before_Atlantis2, by = c("latitude", "longitude", "roms_layer"))
 
   ###################################################################
@@ -77,7 +78,7 @@ foreach(days = step_file) %dopar%{
       # Calculate the layer
       for (j in 1:layer){
         subset <-merge_test %>%
-          filter(.bx0 == i, atlantis_layer == j, time == time[t])
+          dplyr::filter(.bx0 == i, atlantis_layer == j, time == time[t])
 
 
         if (dim(subset)[1] == 0){
@@ -100,11 +101,11 @@ foreach(days = step_file) %dopar%{
            Layer_dest = Layer + 1,
            time = min(as.numeric(merge_test$time)) - 1 + time)
 
-  table_flux_ww <- table_flux_ww %>% left_join(layer_max, by = "Polygon #")
+  table_flux_ww <- table_flux_ww %>% dplyr::left_join(layer_max, by = "Polygon #")
 
   table_flux_ww<- table_flux_ww %>%
-    filter(Layer_dest <= layer_max) %>%
-    select(Layer, `Polygon #` ,time, water.exchange, `adjacent box`, Layer_dest)
+    dplyr::filter(Layer_dest <= layer_max) %>%
+    dplyr::select(Layer, `Polygon #` ,time, water.exchange, `adjacent box`, Layer_dest)
 
 
   output_filename <- paste0("/flux_ww_", days,".csv")
@@ -112,6 +113,6 @@ foreach(days = step_file) %dopar%{
   write.csv(table_flux_ww, csv_filename, row.names = F)
 
 }
-registerDoSEQ()
+foreach::registerDoSEQ()
 rm(variable_before_Atlantis)
 gc()

@@ -1,6 +1,4 @@
 
-
-
 output_path <- here::here("Atlantis_inputs", scenario, year)
 
 
@@ -20,23 +18,23 @@ nc_filename <- paste0(output_path,"/pugetsound_SSM_Atlantis_uvw_",scenario,"_",y
 ###########################################################################
 # matrix dest_k, dest_b,
 
-table_flux_ww <- read.csv(paste0(input_path,"/flux_ww_1.csv"))
-table_flux_uv <- read.csv(paste0(input_path,"/uv_1.csv"))
+table_flux_ww <- utils::read.csv(paste0(input_path,"/flux_ww_1.csv"))
+table_flux_uv <- utils::read.csv(paste0(input_path,"/uv_1.csv"))
 
 
 table_flux_ww1 <- table_flux_ww %>%
-  filter(time == 1)%>%
-  select("Layer", "Polygon..","adjacent.box", "water.exchange" , "Layer_dest") %>%
-  rename(atlantis_layer = "Layer",
+  dplyr::filter(time == 1)%>%
+  dplyr::select("Layer", "Polygon..","adjacent.box", "water.exchange" , "Layer_dest") %>%
+  dplyr::rename(atlantis_layer = "Layer",
          `Polygon #` = "Polygon..",
          `adjacent box` = "adjacent.box",
          Corr.water.transfert = "water.exchange",
          Layer_dest = "Layer_dest")
 
 table_flux_uv1 <- table_flux_uv %>%
-  filter(time == 1)%>%
-  select("atlantis_layer", "Polygon..","adjacent.box", "Corr.water.transfert" , "Layer_dest") %>%
-  rename(`Polygon #` = "Polygon..",
+  dplyr::filter(time == 1)%>%
+  dplyr::select("atlantis_layer", "Polygon..","adjacent.box", "Corr.water.transfert" , "Layer_dest") %>%
+  dplyr::rename(`Polygon #` = "Polygon..",
          `adjacent box` = "adjacent.box")
 
 flux_all_table <- rbind(table_flux_uv1, table_flux_ww1)
@@ -60,23 +58,23 @@ exchange= array(rep(0,layer*Nbox*Nmaxdest), dim = c(Nmaxdest, layer,Nbox, ts))
 # Aggregation
 for (days in (1:ts)){
 
-  table_flux_ww <- read.csv(paste0(input_path,"/flux_ww_",days,".csv"))
+  table_flux_ww <- utils::read.csv(paste0(input_path,"/flux_ww_",days,".csv"))
 
-  table_flux_uv <- read.csv(paste0(input_path,"/uv_",days,".csv"))
+  table_flux_uv <- utils::read.csv(paste0(input_path,"/uv_",days,".csv"))
 
   table_flux_ww1 <- table_flux_ww %>%
-    filter(time == days)%>%
-    select("Layer", "Polygon..","adjacent.box", "water.exchange" , "Layer_dest") %>%
-    rename(atlantis_layer = "Layer",
+    dplyr::filter(time == days)%>%
+    dplyr::select("Layer", "Polygon..","adjacent.box", "water.exchange" , "Layer_dest") %>%
+    dplyr::rename(atlantis_layer = "Layer",
            `Polygon #` = "Polygon..",
            `adjacent box` = "adjacent.box",
            Corr.water.transfert = "water.exchange",
            Layer_dest = "Layer_dest")
 
   table_flux_uv1 <- table_flux_uv %>%
-    filter(time == days)%>%
-    select("atlantis_layer", "Polygon..","adjacent.box", "Corr.water.transfert" , "Layer_dest") %>%
-    rename(`Polygon #` = "Polygon..",
+    dplyr::filter(time == days)%>%
+    dplyr::select("atlantis_layer", "Polygon..","adjacent.box", "Corr.water.transfert" , "Layer_dest") %>%
+    dplyr::rename(`Polygon #` = "Polygon..",
            `adjacent box` = "adjacent.box")
 
   flux_all_table <- rbind(table_flux_uv1, table_flux_ww1)
@@ -102,44 +100,44 @@ for (days in (1:ts)){
 # Define nc file
 ###################################################################################
 # Define dimensions
-z_dim <- ncdim_def("z","layerNum", 0:(layer-1))
-b_dim <- ncdim_def("b","boxNum", 0:(Nbox-1))
-t_dim <- ncdim_def("t",paste0("seconds since ",2095,"-01-01"), (seq(1,ts)-1)*60*60*12, unlim = T)
-dest_dim <- ncdim_def("dest", "Nb max of destinaions", 1:Nmaxdest)
+z_dim <- ncdf4::ncdim_def("z","layerNum", 0:(layer-1))
+b_dim <- ncdf4::ncdim_def("b","boxNum", 0:(Nbox-1))
+t_dim <- ncdf4::ncdim_def("t",paste0("seconds since ",year,"-01-01"), (seq(1,ts)-1)*60*60*12, unlim = T)
+dest_dim <- ncdf4::ncdim_def("dest", "Nb max of destinaions", 1:Nmaxdest)
 
 # Define variables
-z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
-b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
-t_var <- ncvar_def("t", "double", dim = list(t_dim), units = paste0("seconds since ",2095,"-01-01"), longname = "t")
-dest_var <- ncvar_def("dest", "int", dim = list(dest_dim), units = "dest", longname = "dest")
+z_var <- ncdf4::ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
+b_var <- ncdf4::ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
+t_var <- ncdf4::ncvar_def("t", "double", dim = list(t_dim), units = paste0("seconds since ",year,"-01-01"), longname = "t")
+dest_var <- ncdf4::ncvar_def("dest", "int", dim = list(dest_dim), units = "dest", longname = "dest")
 
 
-exchange_var = ncvar_def("exchange", prec = "double", dim = list(dest_dim, z_dim,b_dim,t_dim),
+exchange_var = ncdf4::ncvar_def("exchange", prec = "double", dim = list(dest_dim, z_dim,b_dim,t_dim),
                          units = "m^3", missval = 0, longname = "Change in volume in this time step")
-dest_b_var =  ncvar_def("dest_b", prec = "integer", dim = list(dest_dim, z_dim,b_dim,t_dim),
+dest_b_var =  ncdf4::ncvar_def("dest_b", prec = "integer", dim = list(dest_dim, z_dim,b_dim,t_dim),
                         missval = -1, longname = "", units = "#")
-dest_k_var =  ncvar_def("dest_k", prec = "integer", dim = list(dest_dim, z_dim,b_dim,t_dim),
+dest_k_var =  ncdf4::ncvar_def("dest_k", prec = "integer", dim = list(dest_dim, z_dim,b_dim,t_dim),
                         missval = -1, longname = "", units = "#")
 
 
 # Create a NetCDF file
-nc <- nc_create(nc_filename, vars = list(exchange =exchange_var, dest_b = dest_b_var, dest_k = dest_k_var))
+nc <- ncdf4::nc_create(nc_filename, vars = list(exchange =exchange_var, dest_b = dest_b_var, dest_k = dest_k_var))
 
 # Put dimensions and variables in the NetCDF file
 
-ncvar_put(nc, z_var, 1:(layer))
-ncvar_put(nc, b_var, 0:(Nbox-1))
-ncvar_put(nc, exchange_var, exchange, start = c(1,1,1,1),count = c( Nmaxdest, layer,Nbox, ts))
-ncvar_put(nc, dest_b_var, dest_b, start = c(1,1,1,1),count = c(Nmaxdest, layer,Nbox, ts))
-ncvar_put(nc, dest_k_var, dest_k, start = c(1,1,1,1),count = c( Nmaxdest,layer,Nbox, ts))
+ncdf4::ncvar_put(nc, z_var, 1:(layer))
+ncdf4::ncvar_put(nc, b_var, 0:(Nbox-1))
+ncdf4::ncvar_put(nc, exchange_var, exchange, start = c(1,1,1,1),count = c( Nmaxdest, layer,Nbox, ts))
+ncdf4::ncvar_put(nc, dest_b_var, dest_b, start = c(1,1,1,1),count = c(Nmaxdest, layer,Nbox, ts))
+ncdf4::ncvar_put(nc, dest_k_var, dest_k, start = c(1,1,1,1),count = c( Nmaxdest,layer,Nbox, ts))
 
 # Add dt attribute to t variable
-ncatt_put(nc, "t", "dt", 43200.0)
+ncdf4::ncatt_put(nc, "t", "dt", 43200.0)
 
 # Global attributes
-ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
-ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
-ncatt_put(nc, 0, "parameters", "")
+ncdf4::ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
+ncdf4::ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
+ncdf4::ncatt_put(nc, 0, "parameters", "")
 
 # Close the NetCDF file
-nc_close(nc)
+ncdf4::nc_close(nc)

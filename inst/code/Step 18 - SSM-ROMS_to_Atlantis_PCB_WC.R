@@ -14,20 +14,20 @@ output_path <- here::here("Atlantis_daily_files", scenario, year, variable)
 # Read data ROMS data
 roms <-     tidync::tidync(paste0(input_path,filename))
 roms_sed <- tidync::tidync(paste0(input_path,filename_sed))
-box_composition <- read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
+box_composition <- utils::read.csv(system.file("code/box_composition.csv", package = "SSMtoAtlantis"))
 
 ###########################################################################
 
 # get list of ROMS variables
 roms_vars <- tidync::hyper_grids(roms) %>% # all available grids in the ROMS ncdf
-  pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
+  purrr::pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
     roms %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
   })
 
 roms_sed_vars <- tidync::hyper_grids(roms_sed) %>% # all available grids in the ROMS ncdf
-  pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
+  purrr::pluck("grid") %>% # for each grid, pull out all the variables associated with that grid and make a reference table
   purrr::map_df(function(x){
     roms_sed  %>% tidync::activate(x) %>% tidync::hyper_vars() %>%
       dplyr::mutate(grd=x)
@@ -76,19 +76,14 @@ variable_before_Atlantis_sed2 <- roms_sed %>%
     latitude = latitude,
     time = time)
 gc()
-cores=detectCores()
-cl <- cores -1 #not to overload your computer
-cl <- 3 #not to overload your computer
-registerDoParallel(cl)
+cl <- parallel::makeCluster(4)
+doParallel::registerDoParallel(cl)
 
-foreach(days = step_file) %dopar%{
-  # for (days in 1:length(step_file)){
+foreach::foreach(days = step_file,
+                 .packages = c("dplyr","tidync","ncdf4")) %dopar%{
 
-
-
-
-  variable_before_Atlantis<- variable_before_Atlantis2 %>% filter(time== days)
-  variable_before_Atlantis_sed<- variable_before_Atlantis_sed2 %>% filter(time== days)
+  variable_before_Atlantis<- variable_before_Atlantis2 %>% dplyr::filter(time== days)
+  variable_before_Atlantis_sed<- variable_before_Atlantis_sed2 %>% dplyr::filter(time== days)
 
 
 
@@ -154,57 +149,57 @@ foreach(days = step_file) %dopar%{
   # Define nc file
   ###################################################################################
   # Define dimensions
-  z_dim <- ncdim_def("z","layerNum", 1:(layer+1))
-  b_dim <- ncdim_def("b","boxNum", 0:(box-1))
-  t_dim <- ncdim_def("t","seconds since 2011-01-01", (time-1)*60*60)
+  z_dim <- ncdf4::ncdim_def("z","layerNum", 1:(layer+1))
+  b_dim <- ncdf4::ncdim_def("b","boxNum", 0:(box-1))
+  t_dim <- ncdf4::ncdim_def("t","seconds since 2011-01-01", (time-1)*60*60)
   # Define variables
-  z_var <- ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
-  b_var <- ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
-  t_var <- ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
-  PCB_WC <- ncvar_def("PCB_WC", "double", dim = list( z_dim,b_dim, t_dim),
+  z_var <- ncdf4::ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
+  b_var <- ncdf4::ncvar_def("b", "int", dim = list(b_dim), units = "boxNum", longname = "b")
+  t_var <- ncdf4::ncvar_def("t", "double", dim = list(t_dim), units = "seconds since 2011-01-01", longname = "t")
+  PCB_WC <- ncdf4::ncvar_def("PCB_WC", "double", dim = list( z_dim,b_dim, t_dim),
                    units = "mg.m-3", missval = 0, longname = "PCB_WC")
-  PCB_POC <- ncvar_def("PCB_POC", "double", dim = list( z_dim,b_dim, t_dim),
+  PCB_POC <- ncdf4::ncvar_def("PCB_POC", "double", dim = list( z_dim,b_dim, t_dim),
                        units = "mg.m-3", missval = 0, longname = "PCB_POC")
-  PCB_DOC <- ncvar_def("PCB_DOC", "double", dim = list( z_dim,b_dim, t_dim),
+  PCB_DOC <- ncdf4::ncvar_def("PCB_DOC", "double", dim = list( z_dim,b_dim, t_dim),
                        units = "mg.m-3", missval = 0, longname = "PCB_DOC")
   output_filename = paste0("/PCB_Atlantis_", days, ".nc")
   # Create a NetCDF file
   nc_filename <- paste0(output_path, output_filename)
-  nc <- nc_create(nc_filename, vars = list(PCB_WC = PCB_WC, PCB_POC = PCB_POC, PCB_DOC = PCB_DOC))
+  nc <- ncdf4::nc_create(nc_filename, vars = list(PCB_WC = PCB_WC, PCB_POC = PCB_POC, PCB_DOC = PCB_DOC))
 
   # Put dimensions and variables in the NetCDF file
 
-  ncvar_put(nc, z_var, 1:(layer+1))
-  ncvar_put(nc, b_var, 0:(box-1))
-  ncvar_put(nc, t_var, (time-1)*60*60)
-  ncvar_put(nc, PCB_WC, atlantis_input_PCB_WC, start = c(1,1,1),count = c( layer+1,box, length(time)))
-  ncvar_put(nc, PCB_POC, atlantis_input_PCB_POC, start = c(1,1,1),count = c( layer+1,box, length(time)))
-  ncvar_put(nc, PCB_DOC, atlantis_input_PCB_DOC, start = c(1,1,1),count = c( layer+1,box, length(time)))
+  ncdf4::ncvar_put(nc, z_var, 1:(layer+1))
+  ncdf4::ncvar_put(nc, b_var, 0:(box-1))
+  ncdf4::ncvar_put(nc, t_var, (time-1)*60*60)
+  ncdf4::ncvar_put(nc, PCB_WC, atlantis_input_PCB_WC, start = c(1,1,1),count = c( layer+1,box, length(time)))
+  ncdf4::ncvar_put(nc, PCB_POC, atlantis_input_PCB_POC, start = c(1,1,1),count = c( layer+1,box, length(time)))
+  ncdf4::ncvar_put(nc, PCB_DOC, atlantis_input_PCB_DOC, start = c(1,1,1),count = c( layer+1,box, length(time)))
 
   # Add minimum and maximum values to PCB_WC variable attributes
-  ncatt_put(nc, "PCB_WC", "valid_min", -50)
-  ncatt_put(nc, "PCB_WC", "valid_max", 200)
+  ncdf4::ncatt_put(nc, "PCB_WC", "valid_min", -50)
+  ncdf4::ncatt_put(nc, "PCB_WC", "valid_max", 200)
 
   # Add minimum and maximum values to PCB_POC variable attributes
-  ncatt_put(nc, "PCB_POC", "valid_min", 0)
-  ncatt_put(nc, "PCB_POC", "valid_max", 2000)
+  ncdf4::ncatt_put(nc, "PCB_POC", "valid_min", 0)
+  ncdf4::ncatt_put(nc, "PCB_POC", "valid_max", 2000)
 
   # Add minimum and maximum values to PCB_DOC variable attributes
-  ncatt_put(nc, "PCB_DOC", "valid_min", 0)
-  ncatt_put(nc, "PCB_DOC", "valid_max", 2000)
+  ncdf4::ncatt_put(nc, "PCB_DOC", "valid_min", 0)
+  ncdf4::ncatt_put(nc, "PCB_DOC", "valid_max", 2000)
 
   # Add dt attribute to t variable
-  ncatt_put(nc, "t", "dt", 43200.0)
+  ncdf4::ncatt_put(nc, "t", "dt", 43200.0)
 
   # Global attributes
-  ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
-  ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
-  ncatt_put(nc, 0, "parameters", "")
+  ncdf4::ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
+  ncdf4::ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
+  ncdf4::ncatt_put(nc, 0, "parameters", "")
 
   # Close the NetCDF file
-  nc_close(nc)
+  ncdf4::nc_close(nc)
 
 }
-
-registerDoSEQ()
+parallel::stopCluster(cl)
+foreach::registerDoSEQ()
 gc()

@@ -23,7 +23,9 @@ for (i in 1:length(list.file)){
   pdt <- ncvar_get(nc, varid = "t")/60/60+1
   atlantis_input_PCBB1[,,i]      <- ncvar_get(nc, varid = "PCBB1")/0.176 # Concentration in N higher to take into account all the material
   atlantis_input_PCBB2[,,i]      <- ncvar_get(nc, varid = "PCBB2")/0.176 # Concentration in N higher to take into account all the material
-}
+  ncdf4::nc_close(nc)
+
+  }
 
 apply(X = is.na(atlantis_input_PCBB2),  FUN = sum, MARGIN = c(3))
 apply(X = is.na(atlantis_input_PCBB1),  FUN = sum, MARGIN = c(3))
@@ -54,7 +56,7 @@ ncvar_put(nc, PCBB1, atlantis_input_PCBB1, start = c(1,1,1),count = c( layer+1,b
 
 # Add minimum and maximum values to PCBB1 variable attributes
 ncatt_put(nc, paste0("PCB",pcb_n,"_Lrg_Phyto_N"), "valid_min", -50)
-ncatt_put(nc, paste0("PCB",pcb_n,"_Lrg_Phyto_N"), "valid_max", 2000)
+ncatt_put(nc, paste0("PCB",pcb_n,"_Lrg_Phyto_N"), "valid_max", max(atlantis_input_PCBB1, na.rm = T))
 
 # Add dt attribute to t variable
 ncatt_put(nc, "t", "dt", 43200.0)
@@ -64,7 +66,7 @@ ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
 ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
 
 # Close the NetCDF file
-nc_close(nc)
+ncdf4::nc_close(nc)
 
 
 
@@ -96,7 +98,7 @@ ncvar_put(nc, PCBB2, atlantis_input_PCBB2, start = c(1,1,1),count = c( layer+1,b
 
 # Add minimum and maximum values to PCBB2 variable attributes
 ncatt_put(nc, paste0("PCB",pcb_n,"_Sm_Phyto_N"), "valid_min", -1)
-ncatt_put(nc, paste0("PCB",pcb_n,"_Sm_Phyto_N"), "valid_max", 2000)
+ncatt_put(nc, paste0("PCB",pcb_n,"_Sm_Phyto_N"), "valid_max", max(atlantis_input_PCBB2, na.rm = T))
 
 # Add dt attribute to t variable
 ncatt_put(nc, "t", "dt", 43200.0)
@@ -106,4 +108,4 @@ ncatt_put(nc, 0, "title", "PSIMF Atlantis forcing")
 ncatt_put(nc, 0, "geometry", "PugetSound_89b_070116.bgm")
 
 # Close the NetCDF file
-nc_close(nc)
+ncdf4::nc_close(nc)
