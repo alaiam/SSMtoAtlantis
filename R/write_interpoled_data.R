@@ -108,10 +108,10 @@ write_interpoled_data <- function(data, start_year, end_year, variable, scenario
     time = time = seq(0,dim(data$exchange)[4]*12*60*60-1, 12*60*60)
 
     # Define dimensions
-    z_dim <- ncdf4::ncdim_def("z","layerNum", 0:(dim(data$exchange)[1]-1)) # 7 layers
+    z_dim <- ncdf4::ncdim_def("z","layerNum", 0:(dim(data$exchange)[2]-1))
     b_dim <- ncdf4::ncdim_def("b","boxNum", 0:(dim(data$exchange)[3]-1)) # 89 polygons
     t_dim <- ncdf4::ncdim_def("t",units = paste0("seconds since ",start_year,"-01-01"), time, unlim = T)
-    dest_dim <- ncdf4::ncdim_def("dest", "Nb max of destinaions", 1:dim(data$exchange)[2])
+    dest_dim <- ncdf4::ncdim_def("dest", "Nb max of destinaions", 1:dim(data$exchange)[1])
 
     # Define variables
     z_var <- ncdf4::ncvar_def("z", "int", dim = list(z_dim), units = "depthBin", longname = "z")
@@ -133,11 +133,11 @@ write_interpoled_data <- function(data, start_year, end_year, variable, scenario
 
     # Put dimensions and variables in the NetCDF file
 
-    ncdf4::ncvar_put(nc, z_var, 1:(dim(data$exchange)[1]))
+    ncdf4::ncvar_put(nc, z_var, 1:(dim(data$exchange)[1]-1))
     ncdf4::ncvar_put(nc, b_var, 0:(dim(data$exchange)[3]-1))
-    ncdf4::ncvar_put(nc, exchange_var, data$exchange, start = c(1,1,1,1), count = c(dim(data$exchange)[2], dim(data$exchange)[1],dim(data$exchange)[3], dim(data$exchange)[4]))
-    ncdf4::ncvar_put(nc, dest_b_var,   data$dest_b,   start = c(1,1,1,1), count = c(dim(data$exchange)[2], dim(data$exchange)[1],dim(data$exchange)[3], dim(data$exchange)[4]))
-    ncdf4::ncvar_put(nc, dest_k_var,   data$dest_k,   start = c(1,1,1,1), count = c(dim(data$exchange)[2], dim(data$exchange)[1],dim(data$exchange)[3], dim(data$exchange)[4]))
+    ncdf4::ncvar_put(nc, exchange_var, data$exchange, start = c(1,1,1,1), count = c(dim(data$exchange)[1], dim(data$exchange)[2],dim(data$exchange)[3], dim(data$exchange)[4]))
+    ncdf4::ncvar_put(nc, dest_b_var,   data$dest_b,   start = c(1,1,1,1), count = c(dim(data$exchange)[1], dim(data$exchange)[2],dim(data$exchange)[3], dim(data$exchange)[4]))
+    ncdf4::ncvar_put(nc, dest_k_var,   data$dest_k,   start = c(1,1,1,1), count = c(dim(data$exchange)[1], dim(data$exchange)[2],dim(data$exchange)[3], dim(data$exchange)[4]))
 
     # Add dt attribute to t variable
     ncdf4::ncatt_put(nc, "t", "dt", 43200.0)
