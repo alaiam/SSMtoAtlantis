@@ -52,7 +52,7 @@ doParallel::registerDoParallel(cl)
 
 foreach::foreach(days = step_file,
                  .packages = c("dplyr","tidync","ncdf4")) %dopar%{
-  variable_before_Atlantis<- variable_before_Atlantis2 %>% dplyer::filter(time== days)
+  variable_before_Atlantis<- variable_before_Atlantis2 %>% dplyr::filter(time== days)
   variables_polygons <- merge(box_composition, variable_before_Atlantis, by = c("latitude", "longitude", "roms_layer"))
 
   ###################################################################
